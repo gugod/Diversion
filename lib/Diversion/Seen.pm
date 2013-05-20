@@ -9,17 +9,17 @@ has _data => ( is => "rw" );
 
 has dirtiness => (
     is => "rw",
-    default => 0
+    default => sub { 0 }
 );
 
 has tolorance => (
     is => "rw",
-    default => 99
+    default => sub { 99 }
 );
 
 has expiry => (
     is => "ro",
-    default => 16*86400
+    default => sub { 16*86400 }
 );
 
 sub BUILD {
@@ -49,7 +49,7 @@ sub DEMOLISH {
 sub add {
     my ($self, $key) = @_;
     $self->_data->{$key} = time;
-    $self->dirtiness( $self->dirtiness + 1 );
+    $self->dirtiness( ($self->dirtiness||0) + 1 );
     if ($self->dirtiness > $self->tolorance) {
         $self->save;
     }

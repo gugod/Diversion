@@ -2,6 +2,9 @@
 
 use v5.14;
 use strict;
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+
 use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP;
 use Email::Simple;
@@ -15,6 +18,7 @@ use List::Util qw(shuffle);
 use Try::Tiny;
 use DateTime;
 use DateTime::Duration;
+use Diversion::Seen;
 
 my %opts;
 getopts("c:", \%opts);
@@ -35,15 +39,14 @@ sub send_feed_mail {
     sendmail($email, { transport => Email::Sender::Transport::SMTP->new( $config->{smtp} ) });
 }
 
-my $far_past = DateTime->now - DateTime::Duration->new(days => 1);
 sub seen {
-    my ($entry) = @_;
-    if ($entry->issued) {
-        if ($entry->issued < $far_past) {
-            return 0;
-        }
-    }
-    return 1;
+    state $seen = Diversion::Seen->new( file => "$ENV{HOME}/.diversion/feed.db" );
+    my ($key) = @_;
+
+    return 1 if $seen->get($key);
+
+    $seen->add($key);
+    return 0;
 }
 
 $config = from_toml( io($opts{c})->all );
@@ -62,9 +65,9 @@ else {
 }
 
 
-my $body;
+my $body = "";
 
-for (shuffle @feeds) {
+for (@feeds) {
     my $uri = URI->new($_);
     my $_body = "";
     say "Processing $uri";
@@ -72,7 +75,15 @@ for (shuffle @feeds) {
     try {
         my $feed = XML::Feed->parse( $uri ) or die "Not a feed URI: $uri";
 
-        my @entries = grep { !seen($_) } $feed->entries;
+        my @entries = grep { !seen($_->{url}) } map {
+            my $u = URI->new( $_->link );
+            unless ($u->scheme) {
+                $u = URI->new($_->base . $_->link);
+                $u->scheme("http") unless $u->scheme;
+            }
+
+            { title => $_->title, url => "$u" };
+        } $feed->entries;
 
         if (@entries) {
             my $feed_title = $feed->title;
@@ -80,7 +91,7 @@ for (shuffle @feeds) {
 
             $_body .= "# $feed_title\n\n";
             for my $entry (@entries) {
-                my ($title, $link) = ($entry->title, $entry->link);
+                my ($title, $link) = ($entry->{title}, $entry->{url});
 
                 for ($title, $link) {
                     utf8::is_utf8($_) or utf8::decode($_);
@@ -101,7 +112,8 @@ for (shuffle @feeds) {
         $body .= $_body
     }
 }
-send_feed_mail($body);
+
+send_feed_mail($body || "No new feed entries.");
 
 __END__
 
