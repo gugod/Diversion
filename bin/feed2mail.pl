@@ -4,6 +4,7 @@ use v5.14;
 use strict;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
+use lib "$Bin/../local/lib/perl5";
 
 use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP;
