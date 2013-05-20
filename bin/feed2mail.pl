@@ -41,7 +41,7 @@ sub send_feed_mail {
 }
 
 sub seen {
-    state $seen = Diversion::Seen->new( file => "$ENV{HOME}/.diversion/feed.db" );
+    state $seen = Diversion::Seen->new( file => $config->{feed}{storage} );
     my ($key) = @_;
 
     return 1 if $seen->get($key);
