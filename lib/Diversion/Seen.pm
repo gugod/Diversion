@@ -17,6 +17,11 @@ has tolorance => (
     default => 99
 );
 
+has expiry => (
+    is => "ro",
+    default => 16*86400
+);
+
 sub BUILD {
     my ($self) = @_;
 
@@ -58,6 +63,14 @@ sub get {
 
 sub save {
     my ($self) = @_;
+    my $now = time;
+    my $d = $self->_data;
+    for my $k (keys %$d) {
+        if ( ($now - $d->{$k}) > $self->expiry) {
+            delete $d->{$k}
+        }
+    }
+
     write_file( $self->file, encode_sereal( $self->_data ) );
     $self->dirtiness( 0 );
 }
