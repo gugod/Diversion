@@ -99,7 +99,7 @@ else {
 
 my $data = {};
 
-for (@feeds) {
+for (shuffle(@feeds)) {
     my $uri = URI->new($_);
     my $_body = "";
     say "Processing $uri";
