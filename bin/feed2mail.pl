@@ -5,7 +5,9 @@ use strict;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use lib "$Bin/../local/lib/perl5";
+use Diversion::Seen;
 
+use Email::MIME;
 use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP;
 use Email::Simple;
@@ -19,7 +21,7 @@ use List::Util qw(shuffle);
 use Try::Tiny;
 use DateTime;
 use DateTime::Duration;
-use Diversion::Seen;
+use Encode;
 
 my %opts;
 getopts("c:", \%opts);
@@ -29,15 +31,45 @@ my $config;
 
 sub send_feed_mail {
     my $mail_body = shift;
-    my $email = Email::Simple->create(
-        header => [
+
+    my $email = Email::MIME->create(
+        header_str => [
+            From    => $config->{email}{from},
+            To      => $config->{email}{to},
             Subject => "Feed2Email",
-            From => $config->{email}{from},
-            To => $config->{email}{to},
         ],
-        body => $mail_body
+        parts => [
+            Email::MIME->create(
+                attributes => {
+                    content_type => "text/html",
+                    encoding => "base64",
+                },
+                body => Encode::encode_utf8($mail_body)
+            )
+        ]
     );
+
+    $email->charset_set("utf-8");
+
     sendmail($email, { transport => Email::Sender::Transport::SMTP->new( $config->{smtp} ) });
+}
+
+sub build_html_mail {
+    my $data = shift;
+    my $body = "";
+
+    for my $feed (@{$data->{feeds}}) {
+        $body .= "<h2>$feed->{title}</h2>\n";
+        $body .= "<ul>\n";
+        for my $entry (@{$feed->{entries}}) {
+            $body .= "<li>";
+            $body .= qq{<a href="$entry->{link}">$entry->{title}</a>};
+            $body .= "</li>";
+        }
+        $body .= "</ul>\n";
+    }
+    $body = "<html><body>$body</body></html>";
+    return $body;
 }
 
 sub seen {
@@ -65,8 +97,7 @@ else {
     die "feeds.opml should point to a file\n"
 }
 
-
-my $body = "";
+my $data = {};
 
 for (@feeds) {
     my $uri = URI->new($_);
@@ -90,7 +121,8 @@ for (@feeds) {
             my $feed_title = $feed->title;
             utf8::is_utf8($feed_title) or utf8::decode($feed_title);
 
-            $_body .= "# $feed_title\n\n";
+            my @_entries;
+
             for my $entry (@entries) {
                 my ($title, $link) = ($entry->{title}, $entry->{url});
 
@@ -100,21 +132,28 @@ for (@feeds) {
 
                 $title =~ s!\n! !g;
 
-                $_body .= " - $title <$link>\n";
+                push @_entries, {
+                    title => $title,
+                    link  => $link
+                }
             }
-            $_body .= "\n----\n";
+
+            push @{ $data->{feeds} }, {
+                title => $feed_title,
+                entries => \@_entries
+            };
         }
     }
     catch {
         warn "Failed: $_";
     };
-
-    if ($_body) {
-        $body .= $_body
-    }
 }
 
-send_feed_mail($body || "No new feed entries.");
+my $body = build_html_mail($data);
+
+if ($body) {
+    send_feed_mail($body)
+}
 
 __END__
 
