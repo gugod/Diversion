@@ -102,7 +102,6 @@ my $data = {};
 for (shuffle(@feeds)) {
     my $uri = URI->new($_);
     my $_body = "";
-    say "Processing $uri";
 
     try {
         my $feed = XML::Feed->parse( $uri ) or die "Not a feed URI: $uri";
