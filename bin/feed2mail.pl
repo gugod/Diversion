@@ -10,9 +10,8 @@ use Diversion::Seen;
 use Email::MIME;
 use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP;
-use Email::Simple;
-use Email::Simple::Creator;
-use XML::Feed;
+
+use XML::FeedPP;
 use XML::XPath;
 use TOML;
 use Getopt::Std qw(getopts);
@@ -62,14 +61,28 @@ sub build_html_mail {
         $body .= "<h2>$feed->{title}</h2>\n";
         $body .= "<ul>\n";
         for my $entry (@{$feed->{entries}}) {
-            $body .= "<li>";
-            $body .= qq{<a href="$entry->{link}">$entry->{title}</a>};
-            $body .= "</li>";
+            if ($entry->{media_content} && $entry->{media_thumbnail}) {
+                $body .= qq{<li class="image"><a href="$entry->{media_content}"><img src="$entry->{media_thumbnail}"/></a></li>};
+            }
+            else {
+                $body .= qq{<li class="text"><a href="$entry->{link}">$entry->{title}</a></li>};
+            }
         }
         $body .= "</ul>\n";
     }
-    $body = "<html><body>$body</body></html>";
-    return $body;
+
+    if ($body) {
+        my $style = <<STYLE;
+<style type="text/css">
+img { vertical-align: top }
+li.image { display: inline-block; padding: 5px; }
+li.text { display: block; padding: 5px; }
+</style>
+STYLE
+
+        $body = "<html><head>${style}</head><body>${body}</body></html>";
+        return $body;
+    }
 }
 
 sub seen {
@@ -99,22 +112,15 @@ else {
 
 my $data = {};
 
-for (shuffle(@feeds)) {
+for (shuffle @feeds) {
     my $uri = URI->new($_);
     my $_body = "";
 
     try {
-        my $feed = XML::Feed->parse( $uri ) or die "Not a feed URI: $uri";
+        my $feed = XML::FeedPP->new("$uri");
+        $feed->xmlns( "xmlns:media" => "http://search.yahoo.com/mrss" );
 
-        my @entries = grep { !seen($_->{url}) } map {
-            my $u = URI->new( $_->link );
-            unless ($u->scheme) {
-                $u = URI->new($_->base . $_->link);
-                $u->scheme("http") unless $u->scheme;
-            }
-
-            { title => $_->title, url => "$u" };
-        } $feed->entries;
+        my @entries = grep { !seen($_->link) } $feed->get_item;
 
         if (@entries) {
             my $feed_title = $feed->title;
@@ -123,7 +129,7 @@ for (shuffle(@feeds)) {
             my @_entries;
 
             for my $entry (@entries) {
-                my ($title, $link) = ($entry->{title}, $entry->{url});
+                my ($title, $link) = ($entry->title, $entry->link);
 
                 for ($title, $link) {
                     utf8::is_utf8($_) or utf8::decode($_);
@@ -133,7 +139,9 @@ for (shuffle(@feeds)) {
 
                 push @_entries, {
                     title => $title,
-                    link  => $link
+                    link  => $link,
+                    media_content => $entry->get('media:content@url'),
+                    media_thumbnail => $entry->get('media:thumbnail@url'),
                 }
             }
 
@@ -151,8 +159,11 @@ for (shuffle(@feeds)) {
 my $body = build_html_mail($data);
 
 if ($body) {
+    io("/tmp/mail.html")->print($body);
     send_feed_mail($body)
 }
+
+
 
 __END__
 
