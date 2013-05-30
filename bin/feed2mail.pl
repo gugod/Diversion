@@ -11,6 +11,7 @@ use Email::MIME;
 use Email::Sender::Simple qw(sendmail);
 use Email::Sender::Transport::SMTP;
 
+use URI;
 use XML::FeedPP;
 use XML::XPath;
 use TOML;
