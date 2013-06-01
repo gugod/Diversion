@@ -1,0 +1,14 @@
+requires 'DateTime';
+requires 'DateTime::Duration';
+requires 'Email::MIME';
+requires 'Email::Sender::Simple';
+requires 'Email::Sender::Transport::SMTP';
+requires 'File::Slurp';
+requires 'IO::All';
+requires 'Moo';
+requires 'Sereal';
+requires 'TOML';
+requires 'Try::Tiny';
+requires 'URI';
+requires 'XML::FeedPP';
+requires 'XML::XPath';
