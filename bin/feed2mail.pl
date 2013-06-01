@@ -62,8 +62,9 @@ sub build_html_mail {
         $body .= "<h2>$feed->{title}</h2>\n";
         $body .= "<ul>\n";
         for my $entry (@{$feed->{entries}}) {
-            if ($entry->{media_content} && $entry->{media_thumbnail}) {
-                $body .= qq{<li class="image"><a href="$entry->{media_content}"><img src="$entry->{media_thumbnail}"/></a></li>};
+            if ($entry->{media_thumbnail}) {
+                my $url = $entry->{link};
+                $body .= qq{<li class="image"><a href="$url"><img src="$entry->{media_thumbnail}"/></a></li>};
             }
             else {
                 $body .= qq{<li class="text"><a href="$entry->{link}">$entry->{title}</a></li>};
@@ -121,7 +122,7 @@ for (shuffle @feeds) {
         my $feed = XML::FeedPP->new("$uri");
         $feed->xmlns( "xmlns:media" => "http://search.yahoo.com/mrss" );
 
-        my @entries = grep { !seen($_->link) } $feed->get_item;
+        my @entries = grep { $_->link && !seen($_->link) } $feed->get_item;
 
         if (@entries) {
             my $feed_title = $feed->title;
@@ -141,7 +142,6 @@ for (shuffle @feeds) {
                 push @_entries, {
                     title => $title,
                     link  => $link,
-                    media_content => $entry->get('media:content@url'),
                     media_thumbnail => $entry->get('media:thumbnail@url'),
                 }
             }
