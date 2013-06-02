@@ -62,7 +62,7 @@ sub build_html_mail {
         $body .= "<h2>$feed->{title}</h2>\n";
         $body .= "<ul>\n";
         for my $entry (@{$feed->{entries}}) {
-            if ($entry->{media_thumbnail}) {
+            if ($entry->{media_content} && $entry->{media_thumbnail}) {
                 my $url = $entry->{link};
                 $body .= qq{<li class="image"><a href="$url"><img src="$entry->{media_thumbnail}"/></a></li>};
             }
@@ -143,6 +143,7 @@ for (shuffle @feeds) {
                     title => $title,
                     link  => $link,
                     media_thumbnail => $entry->get('media:thumbnail@url'),
+                    media_content => $entry->get('media:content@url'),
                 }
             }
 
