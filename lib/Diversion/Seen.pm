@@ -19,7 +19,7 @@ has tolorance => (
 
 has expiry => (
     is => "ro",
-    default => sub { 16*86400 }
+    default => sub { 60*86400 }
 );
 
 sub BUILD {
