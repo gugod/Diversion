@@ -22,6 +22,7 @@ use Try::Tiny;
 use DateTime;
 use DateTime::Duration;
 use Encode;
+use Digest::SHA1 qw(sha1_hex);
 
 my %opts;
 getopts("c:", \%opts);
@@ -88,12 +89,9 @@ STYLE
 }
 
 sub seen {
-    state $seen = Diversion::Seen->new( file => $config->{feed}{storage} );
-    my ($key) = @_;
-
-    return 1 if $seen->get($key);
-
-    $seen->add($key);
+    my ($db, $key) = @_;
+    return 1 if $db->get($key);
+    $db->add($key);
     return 0;
 }
 
@@ -116,13 +114,15 @@ my $data = {};
 
 for (shuffle @feeds) {
     my $uri = URI->new($_);
+    my $seen_db = Diversion::Seen->new( file => io->catfile($config->{feed}{storage}, sha1_hex("$uri"), "feed.db")->absolute->name );
+
     my $_body = "";
 
     try {
         my $feed = XML::FeedPP->new("$uri");
         $feed->xmlns( "xmlns:media" => "http://search.yahoo.com/mrss" );
 
-        my @entries = grep { $_->link && !seen($_->link) } $feed->get_item;
+        my @entries = grep { $_->link && !seen($seen_db, $_->link) } $feed->get_item;
 
         if (@entries) {
             my $feed_title = $feed->title;

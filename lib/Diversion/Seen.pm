@@ -1,6 +1,7 @@
 package Diversion::Seen;
 use Moo;
 use File::Slurp qw(read_file write_file);
+use IO::All;
 use Sereal qw(encode_sereal decode_sereal looks_like_sereal);
 
 has file => ( is => "ro", required => 1 );
@@ -26,7 +27,7 @@ sub BUILD {
     my ($self) = @_;
 
     if ( -f $self->file ) {
-        my $data = read_file( $self->file );
+        my $data = io( $self->file )->all;
         if (looks_like_sereal($data)) {
             $self->_data( decode_sereal($data) );
         } else {
@@ -71,7 +72,7 @@ sub save {
         }
     }
 
-    write_file( $self->file, encode_sereal( $self->_data ) );
+    io($self->file)->assert->print(encode_sereal( $self->_data ));
     $self->dirtiness( 0 );
 }
 
