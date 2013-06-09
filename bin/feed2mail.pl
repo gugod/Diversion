@@ -13,7 +13,6 @@ use Email::Sender::Transport::SMTP;
 
 use URI;
 use XML::FeedPP;
-use XML::XPath;
 use TOML;
 use Getopt::Std qw(getopts);
 use IO::All;
@@ -97,17 +96,13 @@ sub seen {
 
 $config = from_toml( io($opts{c})->all );
 
-die "Msising config ?\n" unless $config->{feed} && $config->{feed}{opml} && $config->{smtp} && $config->{email} && $config->{email}{from} && $config->{email}{to};
+die "Msising config ?\n" unless $config->{feed} && $config->{feed}{subscription} && $config->{smtp} && $config->{email} && $config->{email}{from} && $config->{email}{to};
 
-if (-f $config->{feed}{opml}) {
-    my $xp = XML::XPath->new(filename => $config->{feed}{opml});
-    my $resultset = $xp->find('//outline[@xmlUrl]');
-    for my $node ($resultset->get_nodelist) {
-        push @feeds, $node->getAttribute("xmlUrl");
-    }
+if (-f $config->{feed}{subscription}) {
+    @feeds = io($config->{feed}{subscription})->chomp->getlines;
 }
 else {
-    die "feeds.opml should point to a file\n"
+    die "Should specifiy feed.subscription !\n"
 }
 
 my $data = {};
