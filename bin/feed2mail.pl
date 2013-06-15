@@ -79,7 +79,7 @@ sub build_html_mail {
 img { vertical-align: top }
 li.image { display: inline-block; padding: 5px; }
 li.text { display: block; padding: 5px; }
-body { -webkit-column-width: 20em }
+body { -webkit-column-count: 3 }
 </style>
 STYLE
 
