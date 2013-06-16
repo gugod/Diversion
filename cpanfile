@@ -15,3 +15,4 @@ requires 'XML::XPath'                     => '0';
 requires 'Digest::SHA1'                   => '0';
 requires 'URI::Escape'                    => '0';
 requires 'Feed::Find'                     => '0';
+requires 'Test::Spec'                     => '0';

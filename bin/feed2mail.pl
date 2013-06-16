@@ -22,6 +22,7 @@ use DateTime;
 use DateTime::Duration;
 use Encode;
 use Digest::SHA1 qw(sha1_hex);
+use List::MoreUtils qw(part);
 
 my %opts;
 getopts("c:", \%opts);
@@ -79,20 +80,12 @@ sub build_html_mail {
 img { vertical-align: top }
 li.image { display: inline-block; padding: 5px; }
 li.text { display: block; padding: 5px; }
-body { -webkit-column-count: 3 }
 </style>
 STYLE
 
         $body = "<html><head>${style}</head><body>${body}</body></html>";
         return $body;
     }
-}
-
-sub seen {
-    my ($db, $key) = @_;
-    return 1 if $db->get($key);
-    $db->add($key);
-    return 0;
 }
 
 $config = from_toml( io($opts{c})->all );
@@ -118,15 +111,17 @@ for (shuffle @feeds) {
         my $feed = XML::FeedPP->new("$uri");
         $feed->xmlns( "xmlns:media" => "http://search.yahoo.com/mrss" );
 
-        my @entries = grep { $_->link && !seen($seen_db, $_->link) } $feed->get_item;
+        my ($seen_entries, $unseen_entries) = part {
+            $seen_db->get($_->link) ? 0 : 1
+        } grep { $_->link } $feed->get_item;
 
-        if (@entries) {
+        if ($unseen_entries) {
             my $feed_title = $feed->title;
             utf8::is_utf8($feed_title) or utf8::decode($feed_title);
 
             my @_entries;
 
-            for my $entry (@entries) {
+            for my $entry (@$unseen_entries) {
                 my ($title, $link) = ($entry->title, $entry->link);
 
                 for ($title, $link) {
@@ -147,6 +142,16 @@ for (shuffle @feeds) {
                 title => $feed_title,
                 entries => \@_entries
             };
+        }
+
+        if ($seen_entries) {
+            for my $entry (@$seen_entries) {
+                my ($title, $link) = ($entry->title, $entry->link);
+                for ($title, $link) {
+                    utf8::is_utf8($_) or utf8::decode($_);
+                }
+                $seen_db->add($link);
+            }
         }
     }
     catch {
