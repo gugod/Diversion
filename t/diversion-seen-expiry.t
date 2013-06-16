@@ -22,7 +22,7 @@ sub seen_something {
     my $seen = Diversion::Seen->new( file => $filename );
     $seen->add("foo");
     $seen->add("bar");
-    $seen->_data->{bar} = time - 20*86400;
+    $seen->_data->{bar} = time - 1 - $seen->expiry * 86400;
 }
 
 sub seen_check {
