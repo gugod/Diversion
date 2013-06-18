@@ -16,3 +16,4 @@ requires 'Digest::SHA1'                   => '0';
 requires 'URI::Escape'                    => '0';
 requires 'Feed::Find'                     => '0';
 requires 'Test::Spec'                     => '0';
+requires 'Net::Twitter'                   => '4.000006';

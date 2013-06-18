@@ -112,7 +112,9 @@ for (shuffle @feeds) {
         $feed->xmlns( "xmlns:media" => "http://search.yahoo.com/mrss" );
 
         my ($seen_entries, $unseen_entries) = part {
-            $seen_db->get($_->link) ? 0 : 1
+            my $last_seen = $seen_db->get($_->link);
+            $seen_db->add($_->link) unless $last_seen;
+            $last_seen ? 0 : 1
         } grep { $_->link } $feed->get_item;
 
         if ($unseen_entries) {
@@ -134,7 +136,7 @@ for (shuffle @feeds) {
                     title => $title,
                     link  => $link,
                     media_thumbnail => $entry->get('media:thumbnail@url'),
-                    media_content => $entry->get('media:content@url'),
+                    media_content   => $entry->get('media:content@url'),
                 }
             }
 
