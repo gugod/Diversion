@@ -6,6 +6,7 @@ use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use lib "$Bin/../local/lib/perl5";
 use Diversion::Seen;
+use Diversion::FeedFetcher;
 
 use Email::MIME;
 use Email::Sender::Simple qw(sendmail);
@@ -103,13 +104,14 @@ my $data = {};
 
 for (shuffle @feeds) {
     my $uri = URI->new($_);
+
+    my $fetcher = Diversion::FeedFetcher->new( url => "$uri" );
     my $seen_db = Diversion::Seen->new( file => io->catfile($config->{feed}{storage}, sha1_hex("$uri"), "feed.db")->absolute->name );
 
     my $_body = "";
 
     try {
-        my $feed = XML::FeedPP->new("$uri");
-        $feed->xmlns( "xmlns:media" => "http://search.yahoo.com/mrss" );
+        my $feed = $fetcher->feed;
 
         my ($seen_entries, $unseen_entries) = part {
             my $last_seen = $seen_db->get($_->link);

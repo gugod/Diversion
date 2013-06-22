@@ -19,7 +19,9 @@ package Diversion::FeedFetcher {
 
     sub _build_feed {
         my ($self) = @_;
-        return XML::FeedPP->new( $self->url );
+        my $feed = XML::FeedPP->new( $self->url );
+        $feed->xmlns( "xmlns:media" => "http://search.yahoo.com/mrss" );
+        return $feed;
     }
 
     sub each_entry {
