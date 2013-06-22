@@ -2,6 +2,7 @@
 
 use strict;
 use Test::Spec;
+use Scalar::Util qw(looks_like_number);
 
 use Diversion::FeedFetcher;
 
@@ -23,7 +24,14 @@ describe "Diversion::FeedFetcher" => sub {
         ok $fetcher->can("each_entry");
 
         my $entries = 0;
-        $fetcher->each_entry( sub { $entries++ } );
+        $fetcher->each_entry(
+            sub {
+                my ($entry, $i) = @_;
+                ok( $entry->isa("XML::Feed::Entry") );
+                ok( looks_like_number($i) );
+
+                $entries++
+            });
         ok $entries > 0;
     };
 };
