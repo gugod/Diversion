@@ -2,8 +2,7 @@ use v5.14;
 
 package Diversion::FeedFetcher {
     use Moose;
-    use XML::Feed;
-    use URI;
+    use XML::FeedPP;
 
     has url => (
         is => "ro",
@@ -13,19 +12,21 @@ package Diversion::FeedFetcher {
 
     has feed => (
         is => "ro",
-        isa => "XML::Feed",
+        isa => "XML::FeedPP",
+        predicate => "feed_is_fetched",
         lazy_build => 1,
     );
 
     sub _build_feed {
         my ($self) = @_;
-        return XML::Feed->parse( URI->new( $self->url ) );
+        return XML::FeedPP->new( $self->url );
     }
 
     sub each_entry {
         my ($self, $cb) = @_;
-        my $feed = $self->feed;
-        my @entries = $feed->entries;
+        return unless ref($cb) eq 'CODE';
+
+        my @entries = $self->feed->uniq_item;
         for my $i (0..$#entries) {
             $cb->($entries[$i], $i);
         }

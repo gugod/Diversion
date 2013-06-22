@@ -17,22 +17,38 @@ describe "Diversion::FeedFetcher" => sub {
 
     it "has a 'feed' property that stores the current XML::Feed object." => sub {
         my $feed = $fetcher->feed;
-        ok ($feed->isa("XML::Feed"));
+        ok ($feed->isa("XML::FeedPP"));
     };
 
-    it "has a 'each_entry' method that takes a callback, and invokes the callback on each entry (XML::Feed::Entry)" => sub {
-        ok $fetcher->can("each_entry");
+    describe "The method `each_entry`" => sub {
+        before each => sub {
+            ok $fetcher->can("each_entry");
+            ok ! $fetcher->feed_is_fetched;
+        };
 
-        my $entries = 0;
-        $fetcher->each_entry(
-            sub {
-                my ($entry, $i) = @_;
-                ok( $entry->isa("XML::Feed::Entry") );
-                ok( looks_like_number($i) );
+        it "takes a callback, and invokes the callback on each entry (XML::FeedPP::Entry)" => sub {
+            my $entries = 0;
+            $fetcher->each_entry(
+                sub {
+                    my ($entry, $i) = @_;
 
-                $entries++
-            });
-        ok $entries > 0;
+                    for my $method (qw(title link)) {
+                        ok( $entry->can($method) );
+                    }
+
+                    ok( looks_like_number($i) );
+
+                    $entries++
+                });
+
+            ok $entries > 0;
+            ok $fetcher->feed_is_fetched;
+        };
+
+        it "does nothing if the argument is not a subref" => sub {
+            $fetcher->each_entry("Nihao");
+            ok ! $fetcher->feed_is_fetched;
+        };
     };
 };
 
