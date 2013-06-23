@@ -28,7 +28,7 @@ package Diversion::FeedFetcher {
         my ($self, $cb) = @_;
         return unless ref($cb) eq 'CODE';
 
-        my @entries = $self->feed->uniq_item;
+        my @entries = $self->feed->get_item;
         for my $i (0..$#entries) {
             $cb->($entries[$i], $i);
         }
