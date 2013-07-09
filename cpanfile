@@ -6,6 +6,7 @@ requires 'Email::Sender::Transport::SMTP' => '0';
 requires 'File::Slurp'                    => '0';
 requires 'IO::All'                        => '0';
 requires 'Moo'                            => '0';
+requires 'Moose'                          => '0';
 requires 'Sereal'                         => '0';
 requires 'TOML'                           => '0';
 requires 'Try::Tiny'                      => '0';

@@ -1,25 +1,20 @@
 package Diversion::FeedArchiver {
-    use Moose;
+    use Moo;
     use Diversion::FeedFetcher;
     use ElasticSearch;
     use Encode;
 
     has url => (
         is => "ro",
-        isa => "Str",
         required => 1
     );
 
     has fetcher => (
-        is => "ro",
-        isa => "Diversion::FeedFetcher",
-        lazy_build => 1
+        is => "lazy",
     );
 
     has elasticsearch => (
-        is => "ro",
-        isa => "ElasticSearch",
-        lazy_build => 1,
+        is => "lazy"
     );
 
     sub _build_fetcher {
