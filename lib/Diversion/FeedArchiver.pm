@@ -1,8 +1,10 @@
 package Diversion::FeedArchiver {
     use Moo;
-    use Diversion::FeedFetcher;
     use ElasticSearch;
     use Encode;
+    use HTML::Restrict;
+
+    use Diversion::FeedFetcher;
 
     has url => (
         is => "ro",
@@ -53,6 +55,9 @@ package Diversion::FeedArchiver {
                     }
                     $data->{$_} = $v;
                 }
+
+                my $stripper = HTML::Restrict->new;
+                $data->{description} = $stripper->process($data->{description});
 
                 push @bulk_actions, {
                     index => {

@@ -18,3 +18,4 @@ requires 'URI::Escape'                    => '0';
 requires 'Feed::Find'                     => '0';
 requires 'Test::Spec'                     => '0';
 requires 'Net::Twitter'                   => '4.000006';
+requires 'HTML::Restrict'                 => '2.1.8';
