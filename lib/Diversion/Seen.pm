@@ -1,6 +1,5 @@
 package Diversion::Seen;
 use Moo;
-use File::Slurp qw(read_file write_file);
 use IO::All;
 use Sereal qw(encode_sereal decode_sereal looks_like_sereal);
 
