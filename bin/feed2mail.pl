@@ -24,6 +24,8 @@ use DateTime::Duration;
 use Encode;
 use Digest::SHA1 qw(sha1_hex);
 use List::MoreUtils qw(part);
+use HTML::Escape qw(escape_html);
+use Web::Query;
 
 my %opts;
 getopts("c:", \%opts);
@@ -66,7 +68,7 @@ sub build_html_mail {
         for my $entry (@{$feed->{entries}}) {
             if ($entry->{media_content} && $entry->{media_thumbnail}) {
                 my $url = $entry->{link};
-                $body .= qq{<li class="image"><a href="$url"><img src="$entry->{media_thumbnail}"/></a></li>};
+                $body .= qq{<li class="image"><a title="$entry->{description}" href="$url"><img alt="$entry->{description}" src="$entry->{media_thumbnail}"/></a></li>};
             }
             else {
                 $body .= qq{<li class="text"><a href="$entry->{link}">$entry->{title}</a></li>};
@@ -117,32 +119,39 @@ for (shuffle @feeds) {
         $fetcher->each_entry(
             sub {
                 my ($entry) = @_;
+
                 my $last_seen = $seen_db->get($entry->link);
                 $seen_db->add($entry->link) unless $last_seen;
 
                 if ($last_seen) {
-                    my ($title, $link) = ($entry->title, $entry->link);
-                    for ($title, $link) {
-                        utf8::is_utf8($_) or utf8::decode($_);
-                    }
+                    my ($title, $link) = map { decode(utf8 => $_) } ($entry->title, $entry->link);
                     $seen_db->add($link);
-                    return;
+                    # return;
                 }
 
-                my ($title, $link) = ($entry->title, $entry->link);
-
-                for ($title, $link) {
-                    utf8::is_utf8($_) or utf8::decode($_);
-                }
+                my ($title, $link) = map { decode(utf8 => $_) } ($entry->title, $entry->link);
 
                 $title =~ s!\n! !g;
 
-                push @_entries, {
+                my $_entry = {
                     title => $title,
                     link  => $link,
+                    description     => escape_html( decode(utf8 => $entry->description) ),
                     media_thumbnail => $entry->get('media:thumbnail@url'),
                     media_content   => $entry->get('media:content@url'),
+                };
+
+                unless ($_entry->{media_thumbanil} && $_entry->{media_content}) {
+                    my $wq = Web::Query->new_from_html("<html><body>". $entry->description ."</body></html>");
+                    my $images_in_description = $wq->find("img");
+                    if ($images_in_description->size > 0) {
+                        $_entry->{media_content} = $_entry->{media_thumbnail} = $images_in_description->first->attr("src");
+                        $_entry->{description} = escape_html( decode(utf8 => $images_in_description->first->attr("alt")) );
+                    }
                 }
+
+
+                push @_entries, $_entry;
             }
         );
 
@@ -164,7 +173,7 @@ for (shuffle @feeds) {
 my $body = build_html_mail($data);
 
 if ($body) {
-    io("/tmp/mail.html")->print($body);
+    io("/tmp/mail.html")->utf8->print($body);
     send_feed_mail($body)
 }
 
