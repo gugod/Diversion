@@ -144,7 +144,7 @@ for (shuffle @feeds) {
                 unless ($_entry->{media_thumbanil} && $_entry->{media_content}) {
                     my $wq = Web::Query->new_from_html("<html><body>". $entry->description ."</body></html>");
                     my $images_in_description = $wq->find("img");
-                    if ($images_in_description->size > 0) {
+                    if ($images_in_description->size == 1) {
                         $_entry->{media_content} = $_entry->{media_thumbnail} = $images_in_description->first->attr("src");
                         $_entry->{description} = escape_html( decode(utf8 => $images_in_description->first->attr("alt")) );
                     }
