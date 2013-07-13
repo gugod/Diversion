@@ -18,3 +18,4 @@ requires 'URI'                            => '0';
 requires 'URI::Escape'                    => '0';
 requires 'XML::FeedPP'                    => '0';
 requires 'XML::XPath'                     => '0';
+requires 'Web::Query'                     => '0';
