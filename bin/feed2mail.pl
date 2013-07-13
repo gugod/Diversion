@@ -112,20 +112,23 @@ for (shuffle @feeds) {
 
     try {
         my $feed = $fetcher->feed;
+        my @_entries;
 
-        my ($seen_entries, $unseen_entries) = part {
-            my $last_seen = $seen_db->get($_->link);
-            $seen_db->add($_->link) unless $last_seen;
-            $last_seen ? 0 : 1
-        } grep { $_->link } $feed->get_item;
+        $fetcher->each_entry(
+            sub {
+                my ($entry) = @_;
+                my $last_seen = $seen_db->get($entry->link);
+                $seen_db->add($entry->link) unless $last_seen;
 
-        if ($unseen_entries) {
-            my $feed_title = $feed->title;
-            utf8::is_utf8($feed_title) or utf8::decode($feed_title);
+                if ($last_seen) {
+                    my ($title, $link) = ($entry->title, $entry->link);
+                    for ($title, $link) {
+                        utf8::is_utf8($_) or utf8::decode($_);
+                    }
+                    $seen_db->add($link);
+                    return;
+                }
 
-            my @_entries;
-
-            for my $entry (@$unseen_entries) {
                 my ($title, $link) = ($entry->title, $entry->link);
 
                 for ($title, $link) {
@@ -141,21 +144,16 @@ for (shuffle @feeds) {
                     media_content   => $entry->get('media:content@url'),
                 }
             }
+        );
+
+        if (@_entries) {
+            my $feed_title = $feed->title;
+            utf8::is_utf8($feed_title) or utf8::decode($feed_title);
 
             push @{ $data->{feeds} }, {
                 title => $feed_title,
                 entries => \@_entries
             };
-        }
-
-        if ($seen_entries) {
-            for my $entry (@$seen_entries) {
-                my ($title, $link) = ($entry->title, $entry->link);
-                for ($title, $link) {
-                    utf8::is_utf8($_) or utf8::decode($_);
-                }
-                $seen_db->add($link);
-            }
         }
     }
     catch {
