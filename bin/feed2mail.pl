@@ -81,7 +81,8 @@ sub build_html_mail {
         my $style = <<STYLE;
 <style type="text/css">
 img { vertical-align: top }
-li.image { display: inline-block; padding: 5px; }
+li.image { display: inline-block; padding: 5px; max-width: 600px; }
+li.image img { width: 100% }
 li.text { display: block; padding: 5px; }
 </style>
 STYLE
@@ -126,7 +127,7 @@ for (shuffle @feeds) {
                 if ($last_seen) {
                     my ($title, $link) = map { decode(utf8 => $_) } ($entry->title, $entry->link);
                     $seen_db->add($link);
-                    return;
+                    # return;
                 }
 
                 my ($title, $link) = map { decode(utf8 => $_) } ($entry->title, $entry->link);
@@ -143,10 +144,21 @@ for (shuffle @feeds) {
 
                 unless ($_entry->{media_thumbanil} && $_entry->{media_content}) {
                     my $wq = Web::Query->new_from_html("<html><body>". $entry->description ."</body></html>");
-                    my $images_in_description = $wq->find("img");
+                    my $images_in_description = $wq->find("img")->filter(
+                        sub {
+                            my ($i, $elem) = @_;
+                            if ($elem->attr("width") && $elem->attr("width") == 1 && $elem->attr("height") && $elem->attr("height") == 1) {
+                                return 0;
+                            }
+                            return 1;
+                        }
+                    );
                     if ($images_in_description->size == 1) {
-                        $_entry->{media_content} = $_entry->{media_thumbnail} = $images_in_description->first->attr("src");
-                        $_entry->{description} = escape_html( decode(utf8 => $images_in_description->first->attr("alt")) );
+                        my $text = length($wq->text() =~ s/\s//gr);
+                        if ($text < 1) {
+                            $_entry->{media_content} = $_entry->{media_thumbnail} = $images_in_description->first->attr("src");
+                            $_entry->{description} = escape_html( decode(utf8 => $images_in_description->first->attr("alt")) );
+                        }
                     }
                 }
 
