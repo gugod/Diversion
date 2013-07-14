@@ -18,6 +18,7 @@ use TOML;
 use Getopt::Std qw(getopts);
 use IO::All;
 use List::Util qw(shuffle);
+use List::UtilsBy qw(sort_by nsort_by);
 use Try::Tiny;
 use DateTime;
 use DateTime::Duration;
@@ -97,7 +98,7 @@ $config = from_toml( io($opts{c})->all );
 die "Msising config ?\n" unless $config->{feed} && $config->{feed}{subscription} && $config->{smtp} && $config->{email} && $config->{email}{from} && $config->{email}{to};
 
 if (-f $config->{feed}{subscription}) {
-    @feeds = io($config->{feed}{subscription})->chomp->getlines;
+    @feeds = grep { s/\s//g; $_ } io($config->{feed}{subscription})->chomp->getlines;
 }
 else {
     die "Should specifiy feed.subscription !\n"
@@ -162,12 +163,15 @@ for (shuffle @feeds) {
                     }
                 }
 
-
                 push @_entries, $_entry;
             }
         );
 
         if (@_entries) {
+            @_entries = sort_by {
+                $_->{media_content} ? 1 : 0
+            } @_entries;
+
             my $feed_title = $feed->title;
             utf8::is_utf8($feed_title) or utf8::decode($feed_title);
 
@@ -181,6 +185,10 @@ for (shuffle @feeds) {
         warn "Failed: $_";
     };
 }
+
+@{$data->{feeds}} = nsort_by {
+    scalar(grep { $_->{media_content} } @{ $_->{entries} })
+} @{$data->{feeds}};
 
 my $body = build_html_mail($data);
 
