@@ -127,7 +127,7 @@ for (shuffle @feeds) {
                 if ($last_seen) {
                     my ($title, $link) = map { decode(utf8 => $_) } ($entry->title, $entry->link);
                     $seen_db->add($link);
-                    # return;
+                    return;
                 }
 
                 my ($title, $link) = map { decode(utf8 => $_) } ($entry->title, $entry->link);
