@@ -193,8 +193,14 @@ for (shuffle @feeds) {
 my $body = build_html_mail($data);
 
 if ($body) {
-    io("/tmp/mail.html")->utf8->print($body);
-    send_feed_mail($body)
+    send_feed_mail($body);
+
+    if ($config->{output}{directory}) {
+        my @l = (localtime)[5,4,3,2,1];
+        $l[0]+=1900;
+        my $ts = sprintf("%4d%02d%02d%02d%02d",@l);
+        io->catfile($config->{output}{directory}, "$ts.html")->utf8->print($body);
+    }
 }
 
 
