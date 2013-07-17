@@ -25,7 +25,7 @@ package Diversion::FeedArchiver {
 
     sub _build_elasticsearch {
         my ($self) = @_;
-        return ElasticSearch->new();
+        return ElasticSearch->new( transport => "httptiny" );
     }
 
     sub log {

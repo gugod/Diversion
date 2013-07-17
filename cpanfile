@@ -20,3 +20,4 @@ requires 'Web::Query'                     => '0';
 requires 'XML::FeedPP'                    => '0';
 requires 'XML::XPath'                     => '0';
 requires 'List::UtilsBy'                  => '0';
+requires 'ElasticSearch'                  => '0';
