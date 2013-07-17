@@ -8,8 +8,23 @@ use lib "$Bin/../local/lib/perl5";
 
 use Diversion::FeedArchiver;
 
+use IO::All;
+
 my $feed_url = shift or die "Missing URL in arg";
 
-my $archiver = Diversion::FeedArchiver->new( url => $feed_url );
+my @feeds;
+if (-f $feed_url) {
+    @feeds = grep { s/\s//g; $_ } io($feed_url)->chomp->getlines;
+}
+else {
+    push @feeds, $feed_url;
+}
 
-$archiver->run;
+for (@feeds) {
+    eval {
+        Diversion::FeedArchiver->new( url => $_ )->run;
+        1;
+    } or do {
+        say STDERR $@;
+    };
+}
