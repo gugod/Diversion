@@ -5,6 +5,8 @@ package Diversion::FeedArchiver {
 
     use Diversion::FeedFetcher;
 
+    with ('Diversion::ElasticSearchConnector');
+
     has url => (
         is => "ro",
         required => 1
@@ -14,18 +16,9 @@ package Diversion::FeedArchiver {
         is => "lazy",
     );
 
-    has elasticsearch => (
-        is => "lazy"
-    );
-
     sub _build_fetcher {
         my ($self) = @_;
         return Diversion::FeedFetcher->new(url => $self->url);
-    }
-
-    sub _build_elasticsearch {
-        my ($self) = @_;
-        return ElasticSearch->new( transport => "httptiny" );
     }
 
     sub log {
