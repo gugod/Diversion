@@ -1,5 +1,6 @@
 package Diversion::ElasticSearchConnector {
     use Moo::Role;
+    use ElasticSearch;
 
     has elasticsearch => (
         is => "lazy"
