@@ -3,7 +3,8 @@ package Diversion::ElasticSearchConnector {
     use ElasticSearch;
 
     has elasticsearch => (
-        is => "lazy"
+        is => "lazy",
+        # isa => "ElasticSearch"
     );
 
     sub _build_elasticsearch {
