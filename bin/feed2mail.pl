@@ -198,6 +198,7 @@ if ($body) {
     if ($config->{output}{directory}) {
         my @l = (localtime)[5,4,3,2,1];
         $l[0]+=1900;
+        $l[1]+=1;
         my $ts = sprintf("%4d%02d%02d%02d%02d",@l);
         io->catfile($config->{output}{directory}, "$ts.html")->utf8->print($body);
     }
