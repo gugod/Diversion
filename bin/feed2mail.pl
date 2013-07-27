@@ -125,13 +125,15 @@ for (shuffle @feeds) {
                 my $last_seen = $seen_db->get($entry->link);
                 $seen_db->add($entry->link) unless $last_seen;
 
+                my ($title, $link) = map {
+                    decode(utf8 => $_) unless Encode::is_utf8($_)
+                    $_;
+                } ($entry->title, $entry->link);
+
                 if ($last_seen) {
-                    my ($title, $link) = map { decode(utf8 => $_) } ($entry->title, $entry->link);
                     $seen_db->add($link);
                     return;
                 }
-
-                my ($title, $link) = map { decode(utf8 => $_) } ($entry->title, $entry->link);
 
                 $title =~ s!\n! !g;
 
@@ -173,7 +175,7 @@ for (shuffle @feeds) {
             } @_entries;
 
             my $feed_title = $feed->title;
-            utf8::is_utf8($feed_title) or utf8::decode($feed_title);
+            decode(utf8 => $feed_title) unless Encode::is_utf8($feed_title);
 
             push @{ $data->{feeds} }, {
                 title => $feed_title,
