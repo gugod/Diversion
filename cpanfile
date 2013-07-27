@@ -20,4 +20,5 @@ requires 'Web::Query'                     => '0';
 requires 'XML::FeedPP'                    => '0';
 requires 'XML::XPath'                     => '0';
 requires 'List::UtilsBy'                  => '0';
-requires 'ElasticSearch'                  => '0';
+requires 'ElasticSearch'                  => '0.65';
+requires 'Devel::StackTrace'              => '1.30';

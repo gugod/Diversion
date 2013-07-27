@@ -22,11 +22,18 @@ use List::UtilsBy qw(sort_by nsort_by);
 use Try::Tiny;
 use DateTime;
 use DateTime::Duration;
-use Encode;
+use Encode ();
 use Digest::SHA1 qw(sha1_hex);
 use List::MoreUtils qw(part);
 use HTML::Escape qw(escape_html);
 use Web::Query;
+
+use Devel::StackTrace;
+$SIG{__DIE__} = sub {
+    my $trace = Devel::StackTrace->new;
+    say $trace->as_string;
+    say "-"x40;
+};
 
 my %opts;
 getopts("c:", \%opts);
@@ -93,6 +100,11 @@ STYLE
     }
 }
 
+sub decode_utf8 {
+    return $_[0] if Encode::is_utf8($_[0]);
+    return Encode::decode("UTF-8" => $_[0]);
+}
+
 $config = from_toml( io($opts{c})->all );
 
 die "Msising config ?\n" unless $config->{feed} && $config->{feed}{subscription} && $config->{smtp} && $config->{email} && $config->{email}{from} && $config->{email}{to};
@@ -125,10 +137,7 @@ for (shuffle @feeds) {
                 my $last_seen = $seen_db->get($entry->link);
                 $seen_db->add($entry->link) unless $last_seen;
 
-                my ($title, $link) = map {
-                    decode(utf8 => $_) unless Encode::is_utf8($_);
-                    $_;
-                } ($entry->title, $entry->link);
+                my ($title, $link) = map { decode_utf8($_) } ($entry->title, $entry->link);
 
                 if ($last_seen) {
                     $seen_db->add($link);
@@ -140,7 +149,7 @@ for (shuffle @feeds) {
                 my $_entry = {
                     title => $title,
                     link  => $link,
-                    description     => escape_html( decode(utf8 => $entry->description) ),
+                    description     => escape_html( decode_utf8($entry->description) ),
                     media_thumbnail => $entry->get('media:thumbnail@url'),
                     media_content   => $entry->get('media:content@url'),
                 };
@@ -160,7 +169,7 @@ for (shuffle @feeds) {
                         my $text = length($wq->text() =~ s/\s//gr);
                         if ($text < 1) {
                             $_entry->{media_content} = $_entry->{media_thumbnail} = $images_in_description->first->attr("src");
-                            $_entry->{description} = escape_html( decode(utf8 => $images_in_description->first->attr("alt")) );
+                            $_entry->{description} = escape_html( decode_utf8($images_in_description->first->attr("alt")) );
                         }
                     }
                 }
@@ -174,8 +183,7 @@ for (shuffle @feeds) {
                 $_->{media_content} ? 1 : 0
             } @_entries;
 
-            my $feed_title = $feed->title;
-            decode(utf8 => $feed_title) unless Encode::is_utf8($feed_title);
+            my $feed_title = decode_utf8( $feed->title );
 
             push @{ $data->{feeds} }, {
                 title => $feed_title,
