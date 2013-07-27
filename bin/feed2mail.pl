@@ -126,7 +126,7 @@ for (shuffle @feeds) {
                 $seen_db->add($entry->link) unless $last_seen;
 
                 my ($title, $link) = map {
-                    decode(utf8 => $_) unless Encode::is_utf8($_)
+                    decode(utf8 => $_) unless Encode::is_utf8($_);
                     $_;
                 } ($entry->title, $entry->link);
 
