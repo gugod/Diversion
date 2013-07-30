@@ -45,6 +45,7 @@ package Diversion::FeedArchiver {
 
                 my @t = (gmtime)[5,4,3,2,1,0];
                 $t[0] += 1900;
+                $t[1] += 1;
                 my $now = sprintf("%4d-%02d-%02dT%02d:%02d:%02d", @t);
 
                 my $data = { updated_at =>  $now };
