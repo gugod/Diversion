@@ -22,7 +22,7 @@ else {
 
 for (@feeds) {
     eval {
-        Diversion::FeedArchiver->new( url => $_ )->run;
+        Diversion::FeedArchiver->new( url => $_ )->fetch_then_archive;
         1;
     } or do {
         say STDERR $@;

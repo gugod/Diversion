@@ -32,7 +32,7 @@ package Diversion::FeedArchiver {
         $self->elasticsearch->create_index(index => "diversion");
     }
 
-    sub run {
+    sub fetch_then_archive {
         my ($self) = @_;
 
         $self->create_index_unless_exists;
