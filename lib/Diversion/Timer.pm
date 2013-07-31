@@ -2,7 +2,7 @@ package Diversion::Timer;
 use Moo::Role;
 
 sub fmt {
-    return sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", $_[5]+1900, @_[4,3,2,1,0]);
+    return sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ", $_[5]+1900, $_[4]+1, @_[3,2,1,0]);
 }
 
 sub looks_like_iso8601 {
