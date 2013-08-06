@@ -1,26 +1,31 @@
 package Diversion::ContentExtractor {
     use Moo;
+    use Mojo::DOM;
+    use Encode ();
     use HTML::ExtractContent;
-    use HTTP::Tiny;
 
-    has url => (
-        is => "ro",
-        required => 1
-    );
+    has content => ( is => "ro", required => 1 );
 
-    sub extract {
-        my ($self) = @_;
+    has text => ( is => "lazy" );
+    has title => ( is => "lazy" );
 
-        my $response = HTTP::Tiny->new( max_size => 409600 )->get( $self->url );
-
-        die "Failed to GET url: @{[ $self->url ]}\n" unless $response->{success};
-
+    sub _build_text {
+        my $self = shift;
         my $ex = HTML::ExtractContent->new;
-        my $text = $ex->extract($response->{content})->as_text;
-        $text =~ tr/\n/ /;
-        $text =~ s/\s+/ /g;
-        $text =~ s/(\p{Han})\s+(\p{Han})/$1 $2/g;
+        my $text = $ex->extract( $self->content )->as_text
+            =~ s/(\p{Han})\s+(\p{Han})/$1 $2/gr
+            =~ s!^ [^\p{General_Category: Punctuation}]+ $!!xmgr;
         return $text;
+    }
+
+    sub _build_title {
+        my $self = shift;
+        my $dom = Mojo::DOM->new( $self->content );
+        my $title = $dom->find("title");
+        if ($title->size > 0) {
+            return $title->[0]->text;
+        }
+        return "";
     }
 }
 
