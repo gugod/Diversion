@@ -1,9 +1,11 @@
 package Diversion::FeedArchiver {
     use Moo;
-    use ElasticSearch;
     use HTML::Restrict;
+    use Encode;
 
     use Diversion::FeedFetcher;
+    use Diversion::UrlFetcher;
+    use Diversion::ContentExtractor;
 
     with ('Diversion::ElasticSearchConnector');
 
@@ -23,7 +25,7 @@ package Diversion::FeedArchiver {
 
     sub log {
         my ($self, @args) = @_;
-        print STDERR @args,"\n";
+        print STDERR Encode::encode_utf8( join(" ", @args) ),"\n";
     }
 
     sub create_index_unless_exists {
@@ -58,6 +60,21 @@ package Diversion::FeedArchiver {
                 $data->{description} = $stripper->process($data->{description});
 
                 my $entry_link = $entry->link;
+
+                eval {
+                    $self->log("Extracting $entry_link");
+                    my $extractor = Diversion::ContentExtractor->new(
+                        content => Diversion::UrlFetcher->new( url => $entry_link )->content
+                    );
+                    $data->{x_text}  = $extractor->text;
+                    $data->{x_title} = $extractor->title;
+                    $self->log("    Extracted. title= $data->{x_title}");
+                    $self->log("    Extracted. text= " . substr($data->{x_text}, 0, 140) );
+                    1;
+                } or do {
+                    $self->log("ERROR: $@");
+                };
+
                 $bulk_actions{$entry_link} = {
                     index => {
                         id => $entry_link,
@@ -92,7 +109,6 @@ package Diversion::FeedArchiver {
                 }
             }
         }
-
 
         if (my @bulk_actions = values %bulk_actions) {
             for (@bulk_actions) {
