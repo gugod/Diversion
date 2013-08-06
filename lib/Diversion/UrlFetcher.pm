@@ -1,13 +1,12 @@
-package Diversion::ContentFetcher {
+package Diversion::UrlFetcher {
     use Moo;
     use HTTP::Tiny;
     use Encode;
 
     has url     => ( is => "ro", required => 1 );
-    has title   => ( is => "lazy" );
-    has content => ( is => "lazy" );
 
     has response => ( is => "lazy" );
+    has content => ( is => "lazy" );
 
     sub _build_response {
         my $self = $_[0];

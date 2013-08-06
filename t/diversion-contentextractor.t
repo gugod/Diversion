@@ -3,7 +3,7 @@
 use strict;
 use Test::Spec;
 use Encode;
-use Diversion::ContentFetcher;
+use Diversion::UrlFetcher;
 use Diversion::ContentExtractor;
 
 describe "Diversion::ContentExtractor" => sub {
@@ -13,7 +13,7 @@ describe "Diversion::ContentExtractor" => sub {
     my $extractor;
 
     before each => sub {
-        my $fetcher = Diversion::ContentFetcher->new( url => $url );
+        my $fetcher = Diversion::UrlFetcher->new( url => $url );
         $content = $fetcher->content;
 
         $extractor = Diversion::ContentExtractor->new( content => $content );
