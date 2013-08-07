@@ -22,3 +22,5 @@ requires 'XML::XPath'                     => '0';
 requires 'List::UtilsBy'                  => '0';
 requires 'ElasticSearch'                  => '0.65';
 requires 'Devel::StackTrace'              => '1.30';
+requires 'HTML::ExtractContent'           => '0';
+requires 'Mojolicious'                    => '4';
