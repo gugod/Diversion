@@ -2,6 +2,7 @@ package Diversion::FeedArchiver {
     use Moo;
     use HTML::Restrict;
     use Encode;
+    use Log::Any qw($log);
 
     use Diversion::FeedFetcher;
     use Diversion::UrlFetcher;
@@ -21,11 +22,6 @@ package Diversion::FeedArchiver {
     sub _build_fetcher {
         my ($self) = @_;
         return Diversion::FeedFetcher->new(url => $self->url);
-    }
-
-    sub log {
-        my ($self, @args) = @_;
-        print STDERR Encode::encode_utf8( join(" ", @args) ),"\n";
     }
 
     sub create_index_unless_exists {
@@ -61,20 +57,6 @@ package Diversion::FeedArchiver {
 
                 my $entry_link = $entry->link;
 
-                eval {
-                    $self->log("Extracting $entry_link");
-                    my $extractor = Diversion::ContentExtractor->new(
-                        content => Diversion::UrlFetcher->new( url => $entry_link )->content
-                    );
-                    $data->{x_text}  = $extractor->text;
-                    $data->{x_title} = $extractor->title;
-                    $self->log("    Extracted. title= $data->{x_title}");
-                    $self->log("    Extracted. text= " . substr($data->{x_text}, 0, 140) );
-                    1;
-                } or do {
-                    $self->log("ERROR: $@");
-                };
-
                 $bulk_actions{$entry_link} = {
                     index => {
                         id => $entry_link,
@@ -99,6 +81,8 @@ package Diversion::FeedArchiver {
                 $new_data->{created_at} = $d->{_source}{created_at};
                 for (keys %{$d->{_source}}) {
                     next if $_ eq "updated_at";
+                    next if $_ =~ /^x_/;
+
                     if (defined($d->{_source}{$_}) && defined($new_data->{$_}) && $d->{_source}{$_} ne $new_data->{$_}) {
                         $new_is_old = 0;
                         last;
@@ -112,7 +96,24 @@ package Diversion::FeedArchiver {
 
         if (my @bulk_actions = values %bulk_actions) {
             for (@bulk_actions) {
-                $_->{index}{data}{created_at} ||= $_->{index}{data}{updated_at};
+                my $data = $_->{index}{data};
+                my $entry_link = $_->{index}{id};
+
+                $data->{created_at} ||= $data->{updated_at};
+
+                eval {
+                    $log->info("Extracting $entry_link");
+                    my $extractor = Diversion::ContentExtractor->new(
+                        content => Diversion::UrlFetcher->new( url => $entry_link )->content
+                    );
+                    $data->{x_text}  = $extractor->text;
+                    $data->{x_title} = $extractor->title;
+                    $log->debug("    Extracted. title= $data->{x_title}");
+                    $log->debug("    Extracted. text= " . substr($data->{x_text}, 0, 140) );
+                    1;
+                } or do {
+                    $self->error("ERROR: $@");
+                };
             }
 
             $self->elasticsearch->bulk(
@@ -122,7 +123,7 @@ package Diversion::FeedArchiver {
             );
         }
         else {
-            $self->log("Nothing to update. All feed entries are the same as it was.");
+            $log->info("Nothing to update. All feed entries are the same as it was.");
         }
     }
 };
