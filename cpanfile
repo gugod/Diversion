@@ -24,8 +24,8 @@ requires 'ElasticSearch'                  => '0.65';
 requires 'Devel::StackTrace'              => '1.30';
 requires 'HTML::ExtractContent'           => '0';
 requires 'Mojolicious'                    => '4';
-requires 'Log::Any'                       => '0';
-requires 'Log::Any::Adapter::Dispatcher'  => '0';
-requires 'Log::Dispatch'                  => '0';
+requires 'Log::Any'                       => '0.15';
+requires 'Log::Any::Adapter::Dispatch'    => '0.06';
+requires 'Log::Dispatch'                  => '2.41';
 
 
