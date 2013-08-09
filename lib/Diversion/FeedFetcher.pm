@@ -3,6 +3,7 @@ use v5.14;
 package Diversion::FeedFetcher {
     use Moo;
     use XML::Loy;
+    use HTTP::Tiny;
     use Encode qw(decode);
 
     has url => (

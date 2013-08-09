@@ -15,25 +15,20 @@ describe "Diversion::FeedFetcher" => sub {
         $fetcher = Diversion::FeedFetcher->new(url => $FEEDURL);
     };
 
-    it "has a 'feed' property that stores the current XML::Feed object." => sub {
-        my $feed = $fetcher->feed;
-        ok ($feed->isa("XML::FeedPP"));
-    };
-
     describe "The method `each_entry`" => sub {
         before each => sub {
             ok $fetcher->can("each_entry");
             ok ! $fetcher->feed_is_fetched;
         };
 
-        it "takes a callback, and invokes the callback on each entry (XML::FeedPP::Entry)" => sub {
+        it "takes a callback, and invokes the callback on each entry." => sub {
             my $entries = 0;
             $fetcher->each_entry(
                 sub {
                     my ($entry, $i) = @_;
 
-                    for my $method (qw(title link)) {
-                        ok( $entry->can($method) );
+                    for my $attr (qw(title link)) {
+                        ok( exists $entry->{$attr} );
                     }
 
                     ok( looks_like_number($i) );
