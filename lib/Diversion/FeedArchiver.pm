@@ -108,8 +108,8 @@ package Diversion::FeedArchiver {
                     );
                     $data->{x_text}  = $extractor->text;
                     $data->{x_title} = $extractor->title;
-                    $log->debug("    Extracted. title= $data->{x_title}");
-                    $log->debug("    Extracted. text= " . substr($data->{x_text}, 0, 140) );
+                    $log->debug("    Extracted. title= " . substr($data->{x_title}, 0, 32 ) );
+                    $log->debug("    Extracted. text= " . substr($data->{x_text}, 0, 32 ) );
                     1;
                 } or do {
                     $self->error("ERROR: $@");
