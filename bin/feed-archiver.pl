@@ -9,6 +9,9 @@ use Diversion::FeedArchiver;
 use IO::All;
 use Log::Dispatch;
 use Log::Any::Adapter;
+use Carp qw(cluck);
+
+# $SIG{__DIE__} = sub { Carp::cluck(@_); exit };
 
 my $feed_url = shift or die "Missing URL in arg";
 

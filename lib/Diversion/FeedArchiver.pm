@@ -48,14 +48,14 @@ package Diversion::FeedArchiver {
 
                 my $data = { updated_at =>  $now };
 
-                for (qw(title pubDate author guid author category description)) {
-                    $data->{$_} = $entry->$_;
+                for (qw(title pubDate author id guid author category description)) {
+                    $data->{$_} = $entry->{$_};
                 }
 
                 my $stripper = HTML::Restrict->new;
                 $data->{description} = $stripper->process($data->{description});
 
-                my $entry_link = $entry->link;
+                my $entry_link = $entry->{link};
 
                 $bulk_actions{$entry_link} = {
                     index => {

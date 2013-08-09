@@ -2,7 +2,7 @@ use v5.14;
 
 package Diversion::FeedFetcher {
     use Moo;
-    use XML::FeedPP;
+    use XML::Loy;
     use Encode qw(decode);
 
     has url => (
@@ -17,35 +17,74 @@ package Diversion::FeedFetcher {
 
     sub _build_feed {
         my ($self) = @_;
-        my $feed = XML::FeedPP->new( $self->url );
-        $feed->xmlns( "xmlns:media" => "http://search.yahoo.com/mrss" );
+
+        my @entries;
+        my $feed = { entry => \@entries };
+
+        my $response = HTTP::Tiny->new->get($self->url);
+        die "Failed to retrieve: $response->{reason}" unless $response->{success};
+        die "Not OK: $response->{reason}" unless $response->{status} == 200;
+
+        my ($enc) = $response->{content} =~ m!\A.+encoding="([^"]+)"!;
+        $enc ||= "utf-8";
+        $enc = lc($enc);
+
+        my $feed_content =  Encode::decode($enc, $response->{content});
+
+        my $xloy = XML::Loy->new( $feed_content );
+        my $root;
+        if ($root = $xloy->find("rss")->[0]) {
+            for my $tag ("title", "description", "updated") {
+                if (my $e = $root->find($tag)->[0]) {
+                    $feed->{$tag} = $e->all_text;
+                }
+            }
+        }
+        elsif ($root = $xloy->find("feed")->[0]) {
+            for my $tag ("id", "title", "description", "updated") {
+                if (my $e = $root->find($tag)->[0]) {
+                    $feed->{$tag} = $e->all_text;
+                }
+            }
+        }
+
+        $xloy->find("item, entry")->each(
+            sub{
+                my $el = $_[0];
+                push @entries, my $entry = {};
+
+                for my $tag ("title", "link", "description", "summary", "pubDate", "updated") {
+                    my $e2 = $el->find($tag)->[0];
+                    if ($e2) {
+                        $entry->{$tag} = $e2->all_text =~ s!\A\s+!!r =~ s!\s+$!!r;
+                    }
+                }
+
+                unless ($entry->{link}) {
+                    for my $e2 ($el->find("link")->each) {
+                        my $type = $e2->attrs("type");
+                        my $rel = $e2->attrs("rel");
+                        if ($type eq "text/html" && $rel eq "alternate") {
+                            $entry->{link} = $e2->attrs("href");
+                        }
+                    }
+                }
+
+                $entry->{description} = Mojo::DOM->new("<div>" . $entry->{description} . "</div>")->all_text;
+            }
+        );
+
         return $feed;
     }
 
     sub each_entry {
         my ($self, $cb) = @_;
+        return @{ $self->feed->{entry} } if !$cb;
         return unless ref($cb) eq 'CODE';
 
-        my @entries = $self->feed->get_item;
+        my @entries = @{ $self->feed->{entry} };
         for my $i (0..$#entries) {
-            my $entry = $entries[$i];
-
-            for (qw(title pubDate author guid author category description)) {
-                my $v = $entry->$_ or next;
-                if (ref($v) eq 'HASH' && $v->{'#text'}) {
-                    $v = $v->{'#text'};
-                    $v = decode('utf8', $v) unless Encode::is_utf8($v);
-                }
-                if (ref($v) eq 'ARRAY') {
-                    @$v = map { $_ = decode('utf8', $_) unless Encode::is_utf8($_); $_ } @$v;
-                }
-                unless (ref($v)) {
-                    $v = decode("utf8" => $v) unless Encode::is_utf8($v);
-                }
-                $entry->$_($v);
-            }
-
-            $cb->($entry, $i);
+            $cb->($entries[$i], $i);
         }
         return $self;
     }
