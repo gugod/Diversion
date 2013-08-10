@@ -8,8 +8,7 @@ use lib "$Bin/../local/lib/perl5";
 use Diversion::Seen;
 use Diversion::FeedFetcher;
 
-use Email::MIME;
-use Email::Sender::Simple qw(sendmail);
+use Email::Stuffer;
 use Email::Sender::Transport::SMTP;
 
 use URI;
@@ -28,13 +27,6 @@ use List::MoreUtils qw(part);
 use HTML::Escape qw(escape_html);
 use Web::Query;
 
-use Devel::StackTrace;
-$SIG{__DIE__} = sub {
-    my $trace = Devel::StackTrace->new;
-    say $trace->as_string;
-    say "-"x40;
-};
-
 my %opts;
 getopts("c:", \%opts);
 die "-c requise a valid TOML file\n" unless -f "$opts{c}";
@@ -42,28 +34,17 @@ my @feeds;
 my $config;
 
 sub send_feed_mail {
-    my $mail_body = shift;
+    my $mail_body = Encode::encode_utf8($_[0]);
 
-    my $email = Email::MIME->create(
-        header_str => [
-            From    => $config->{email}{from},
-            To      => $config->{email}{to},
-            Subject => "Feed2Email",
-        ],
-        parts => [
-            Email::MIME->create(
-                attributes => {
-                    content_type => "text/html",
-                    encoding => "base64",
-                },
-                body => Encode::encode_utf8($mail_body)
-            )
-        ]
-    );
+    my $email = Email::Stuffer->new;
+    $email->transport("SMTP", $config->{smtp}) if exists $config->{smtp};
+    $email->subject( $config->{email}{subject} || "feed updates" );
+    $email->from( $config->{email}{from} );
+    $email->to( $config->{email}{to} );
 
-    $email->charset_set("utf-8");
+    $email->html_body( $mail_body );
 
-    sendmail($email, { transport => Email::Sender::Transport::SMTP->new( $config->{smtp} ) });
+    $email->send();
 }
 
 sub build_html_mail {
@@ -134,10 +115,10 @@ for (shuffle @feeds) {
             sub {
                 my ($entry) = @_;
 
-                my $last_seen = $seen_db->get($entry->link);
-                $seen_db->add($entry->link) unless $last_seen;
+                my $last_seen = $seen_db->get($entry->{link});
+                $seen_db->add($entry->{link}) unless $last_seen;
 
-                my ($title, $link) = map { decode_utf8($_) } ($entry->title, $entry->link);
+                my ($title, $link) = map { decode_utf8($_) } ($entry->{title}, $entry->{link});
 
                 if ($last_seen) {
                     $seen_db->add($link);
@@ -146,16 +127,8 @@ for (shuffle @feeds) {
 
                 $title =~ s!\n! !g;
 
-                my $_entry = {
-                    title => $title,
-                    link  => $link,
-                    description     => escape_html( decode_utf8($entry->description) ),
-                    media_thumbnail => $entry->get('media:thumbnail@url'),
-                    media_content   => $entry->get('media:content@url'),
-                };
-
-                unless ($_entry->{media_thumbanil} && $_entry->{media_content}) {
-                    my $wq = Web::Query->new_from_html("<html><body>". $entry->description ."</body></html>");
+                unless ($entry->{media_thumbanil} && $entry->{media_content}) {
+                    my $wq = Web::Query->new_from_html("<html><body>". $entry->{description} ."</body></html>");
                     my $images_in_description = $wq->find("img")->filter(
                         sub {
                             my ($i, $elem) = @_;
@@ -168,13 +141,13 @@ for (shuffle @feeds) {
                     if ($images_in_description->size == 1) {
                         my $text = length($wq->text() =~ s/\s//gr);
                         if ($text < 1) {
-                            $_entry->{media_content} = $_entry->{media_thumbnail} = $images_in_description->first->attr("src");
-                            $_entry->{description} = escape_html( decode_utf8($images_in_description->first->attr("alt")) );
+                            $entry->{media_content} = $entry->{media_thumbnail} = $images_in_description->first->attr("src");
+                            $entry->{description} = escape_html( decode_utf8($images_in_description->first->attr("alt")) );
                         }
                     }
                 }
 
-                push @_entries, $_entry;
+                push @_entries, $entry;
             }
         );
 
@@ -183,7 +156,7 @@ for (shuffle @feeds) {
                 $_->{media_content} ? 1 : 0
             } @_entries;
 
-            my $feed_title = decode_utf8( $feed->title );
+            my $feed_title = decode_utf8( $feed->{title} );
 
             push @{ $data->{feeds} }, {
                 title => $feed_title,

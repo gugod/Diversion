@@ -1,8 +1,7 @@
 requires 'DateTime'                       => '0';
 requires 'DateTime::Duration'             => '0';
 requires 'Digest::SHA1'                   => '0';
-requires 'Email::MIME'                    => '0';
-requires 'Email::Sender::Simple'          => '0';
+requires 'Email::Stuffer'                 => '0';
 requires 'Email::Sender::Transport::SMTP' => '0';
 requires 'Feed::Find'                     => '0';
 requires 'HTML::Escape'                   => '1.08';
@@ -28,5 +27,4 @@ requires 'Mojolicious'                    => '4';
 requires 'Log::Any'                       => '0.15';
 requires 'Log::Any::Adapter::Dispatch'    => '0.06';
 requires 'Log::Dispatch'                  => '2.41';
-
-
+requires 'Mozilla::CA'                    => '20130114';
