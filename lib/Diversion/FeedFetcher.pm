@@ -50,7 +50,7 @@ package Diversion::FeedFetcher {
         }
 
         $xloy->find("item, entry")->each(
-            sub{
+            sub {
                 my $el = $_[0];
                 push @entries, my $entry = {};
 
@@ -81,6 +81,11 @@ package Diversion::FeedFetcher {
                 }
 
                 $entry->{description} = Mojo::DOM->new("<div>" . $entry->{description} . "</div>")->all_text;
+
+                for (values %$entry) {
+                    $_ = Encode::decode_utf8($_) unless Encode::is_utf8($_);
+                }
+                $entry->{title} =~ s!\n! !g;
             }
         );
 

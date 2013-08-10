@@ -118,14 +118,10 @@ for (shuffle @feeds) {
                 my $last_seen = $seen_db->get($entry->{link});
                 $seen_db->add($entry->{link}) unless $last_seen;
 
-                my ($title, $link) = map { decode_utf8($_) } ($entry->{title}, $entry->{link});
-
                 if ($last_seen) {
-                    $seen_db->add($link);
+                    $seen_db->add($entry->{link});
                     return;
                 }
-
-                $title =~ s!\n! !g;
 
                 unless ($entry->{media_thumbanil} && $entry->{media_content}) {
                     my $wq = Web::Query->new_from_html("<html><body>". $entry->{description} ."</body></html>");
