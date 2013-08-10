@@ -58,8 +58,6 @@ package Diversion::FeedFetcher {
                     my $e2 = $el->find($tag)->[0];
                     if ($e2) {
                         $entry->{"media_$tag"} = $e2->attrs("url");
-
-                        print $entry->{"media_$tag"}."\n";
                     }
                 }
 
