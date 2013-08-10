@@ -34,7 +34,7 @@ my @feeds;
 my $config;
 
 sub send_feed_mail {
-    my $mail_body = Encode::encode_utf8($_[0]);
+    my $mail_body = $_[0];
 
     my $email = Email::Stuffer->new;
     $email->transport("SMTP", $config->{smtp}) if exists $config->{smtp};
