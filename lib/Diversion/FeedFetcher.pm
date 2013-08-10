@@ -80,8 +80,8 @@ package Diversion::FeedFetcher {
 
                 $entry->{description} = Mojo::DOM->new("<div>" . $entry->{description} . "</div>")->all_text;
 
-                for (values %$entry) {
-                    $_ = Encode::decode_utf8($_) unless Encode::is_utf8($_);
+                for (keys %$entry) {
+                    $entry->{$_} = Encode::decode_utf8($entry->{$_}) unless Encode::is_utf8($entry->{$_});
                 }
                 $entry->{title} =~ s!\n! !g;
             }
