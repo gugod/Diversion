@@ -165,9 +165,7 @@ for (shuffle @feeds) {
     };
 }
 
-@{$data->{feeds}} = nsort_by {
-    scalar(grep { $_->{media_content} } @{ $_->{entries} })
-} @{$data->{feeds}};
+@{$data->{feeds}} = nsort_by { 0+@{ $_->{entries} } } @{$data->{feeds}};
 
 my $body = build_html_mail($data);
 
