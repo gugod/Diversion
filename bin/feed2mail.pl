@@ -76,7 +76,18 @@ li.text { display: block; padding: 5px; }
 </style>
 STYLE
 
-        $body = "<html><head>${style}</head><body>${body}</body></html>";
+        $body = <<"BODY";
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Subscription updates</title>
+${style}
+</head>
+<body>${body}</body>
+</html>
+BODY
+
         return $body;
     }
 }
