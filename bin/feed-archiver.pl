@@ -17,7 +17,7 @@ my $feed_url = shift or die "Missing URL in arg";
 
 my $log = Log::Dispatch->new(
     outputs => [
-        [ 'File', min_level => "debug", filename => "/tmp/feed-archiver.pl" ],
+        [ 'File', min_level => "debug", filename => "/tmp/feed-archiver.log" ],
         [ 'Screen', min_level => "debug" ],
     ]
 );
