@@ -1,17 +1,15 @@
 package Diversion::ElasticSearchConnector {
     use Moo::Role;
-    use ElasticSearch;
+    use Elastijk;
 
     has elasticsearch => (
         is => "lazy",
-        # isa => "ElasticSearch"
     );
 
     sub _build_elasticsearch {
         my ($self) = @_;
-        return ElasticSearch->new( transport => "httptiny" );
+        return Elastijk->new(host => '127.0.0.1', port => 9200);
     }
-
 };
 
 1;
