@@ -2,7 +2,6 @@ requires 'DateTime'                       => '0';
 requires 'DateTime::Duration'             => '0';
 requires 'Devel::StackTrace'              => '1.30';
 requires 'Digest::SHA1'                   => '0';
-requires 'ElasticSearch'                  => '0.65';
 requires 'Elastijk'                       => '0.05';
 requires 'Email::Sender::Transport::SMTP' => '0';
 requires 'Email::Stuffer'                 => '0';
