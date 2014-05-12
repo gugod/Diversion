@@ -26,8 +26,19 @@ package Diversion::FeedArchiver {
 
     sub create_index_unless_exists {
         my ($self) = @_;
-        return if $self->elasticsearch->index_exists(index => "diversion");
-        $self->elasticsearch->create_index(index => "diversion");
+        my $es = $self->elasticsearch;
+        return if $es->exists;
+        $es->put(
+            index => "diversion",
+            body => {
+                settings => {
+                    index => {
+                        number_of_shards   => 8,
+                        number_of_replicas => 0,
+                    }
+                },
+            }
+        );
     }
 
     sub fetch_then_archive {
@@ -35,7 +46,7 @@ package Diversion::FeedArchiver {
 
         $self->create_index_unless_exists;
 
-        my %bulk_actions;
+        my %bulk;
 
         $self->fetcher->each_entry(
             sub {
@@ -57,72 +68,23 @@ package Diversion::FeedArchiver {
 
                 my $entry_link = $entry->{link};
 
-                $bulk_actions{$entry_link} = {
-                    index => {
-                        id => $entry_link,
-                        data => $data
-                    }
-                };
+                $bulk{$entry_link} = $data;
             }
         );
 
-        my @entry_urls = keys %bulk_actions;
+        my $es = $self->elasticsearch;
+        $es->{index} = "diversion";
+        $es->{type}  = "feed_entry";
 
-        my $existing_doc = $self->elasticsearch->mget(
-            index => "diversion",
-            type => "feed_entry",
-            ids => \@entry_urls
-        );
-
-        for my $d (@$existing_doc) {
-            if ($d->{exists}) {
-                my $new_is_old = 1;
-                my $new_data = $bulk_actions{$d->{_id}}{index}{data};
-                $new_data->{created_at} = $d->{_source}{created_at};
-                for (keys %{$d->{_source}}) {
-                    next if $_ eq "updated_at";
-                    next if $_ =~ /^x_/;
-
-                    if (defined($d->{_source}{$_}) && defined($new_data->{$_}) && $d->{_source}{$_} ne $new_data->{$_}) {
-                        $new_is_old = 0;
-                        last;
-                    }
-                }
-                if ($new_is_old) {
-                    delete $bulk_actions{$d->{_id}};
-                }
+        my @bulk_body = map { ({ index => { _id => $_ } }, $bulk{$_} ) } keys %bulk;
+        if (@bulk_body) {
+            my ($status, $res) = $es->bulk(body => \@bulk_body);
+            if (substr($status,0,1) eq '2') {
+                $log->debug("Success\n");
+            } else {
+                $log->debug("Failed" . $Elastijk::JSON->encode($res->{errors}) . "\n");
             }
-        }
-
-        if (my @bulk_actions = values %bulk_actions) {
-            for (@bulk_actions) {
-                my $data = $_->{index}{data};
-                my $entry_link = $_->{index}{id};
-
-                $data->{created_at} ||= $data->{updated_at};
-
-                eval {
-                    $log->info("Extracting $entry_link");
-                    my $extractor = Diversion::ContentExtractor->new(
-                        content => Diversion::UrlFetcher->new( url => $entry_link )->content
-                    );
-                    $data->{x_text}  = $extractor->text;
-                    $data->{x_title} = $extractor->title;
-                    $log->debug("    Extracted. title= " . substr($data->{x_title}, 0, 32 ) );
-                    $log->debug("    Extracted. text= " . substr($data->{x_text}, 0, 32 ) );
-                    1;
-                } or do {
-                    $self->error("ERROR: $@");
-                };
-            }
-
-            $self->elasticsearch->bulk(
-                actions => \@bulk_actions,
-                index   => "diversion",
-                type    => "feed_entry"
-            );
-        }
-        else {
+        } else {
             $log->info("Nothing to update. All feed entries are the same as it was.");
         }
     }

@@ -57,7 +57,7 @@ package Diversion::FeedFetcher {
                 for my $tag ("content","thumbnail") {
                     my $e2 = $el->find($tag)->[0];
                     if ($e2) {
-                        $entry->{"media_$tag"} = $e2->attrs("url");
+                        $entry->{"media_$tag"} = $e2->attr("url");
                     }
                 }
 
@@ -70,15 +70,15 @@ package Diversion::FeedFetcher {
 
                 unless ($entry->{link}) {
                     for my $e2 ($el->find("link")->each) {
-                        my $type = $e2->attrs("type");
-                        my $rel = $e2->attrs("rel");
+                        my $type = $e2->attr("type");
+                        my $rel = $e2->attr("rel");
                         if ($type eq "text/html" && $rel eq "alternate") {
-                            $entry->{link} = $e2->attrs("href");
+                            $entry->{link} = $e2->attr("href");
                         }
                     }
                 }
 
-                $entry->{description} = Mojo::DOM->new("<div>" . $entry->{description} . "</div>")->all_text;
+                $entry->{description} = Mojo::DOM->new("<div>" . ($entry->{description}//"") . "</div>")->all_text;
 
                 for (keys %$entry) {
                     $entry->{$_} = Encode::decode_utf8($entry->{$_}) unless Encode::is_utf8($entry->{$_});
