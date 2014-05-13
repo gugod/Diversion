@@ -54,14 +54,14 @@ package Diversion::FeedFetcher {
                 my $el = $_[0];
                 push @entries, my $entry = {};
 
-                for my $tag ("content","thumbnail") {
+                for my $tag ("content", "thumbnail") {
                     my $e2 = $el->find($tag)->[0];
                     if ($e2) {
                         $entry->{"media_$tag"} = $e2->attr("url");
                     }
                 }
 
-                for my $tag ("title", "link", "description", "summary", "pubDate", "updated") {
+                for my $tag ("category", "creator", "author", "title", "link", "description", "summary", "pubDate", "updated") {
                     my $e2 = $el->find($tag)->[0];
                     if ($e2) {
                         $entry->{$tag} = $e2->all_text =~ s!\A\s+!!r =~ s!\s+$!!r;
