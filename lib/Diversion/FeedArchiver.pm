@@ -5,7 +5,6 @@ package Diversion::FeedArchiver {
     use HTML::Restrict;
     use Encode;
     use IO::All;
-    use Fcntl 'SEEK_END';
     use Digest::SHA1 qw<sha1_hex>;
     use Sereal::Encoder;
     
@@ -68,10 +67,7 @@ package Diversion::FeedArchiver {
             }
         );
 
-        my $io = io->catfile($self->storage(), $t[0], "${now_ymd}.srl")->assert;
-        if ($io->exists) {
-            $io->seek( 0, SEEK_END );
-        }
+        my $io = io->catfile($self->storage(), $t[0], "${now_ymd}.srl")->assert->mode('>>')->open;
 
         my $encoder = $self->sereal_encoder;
         for (@bulk) {
