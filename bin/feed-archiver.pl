@@ -10,6 +10,7 @@ use IO::All;
 use Log::Dispatch;
 use Log::Any::Adapter;
 use Carp qw(cluck);
+use Parallel::ForkManager;
 
 # $SIG{__DIE__} = sub { Carp::cluck(@_); exit };
 
@@ -31,7 +32,10 @@ else {
     push @feeds, $feed_url;
 }
 
+my $forkman = Parallel::ForkManager->new(8);
 for (@feeds) {
+    $forkman->start and next;
+    say "Processing $_";
     eval {
         Diversion::FeedArchiver->new(
             url => $_,
@@ -41,4 +45,7 @@ for (@feeds) {
     } or do {
         say STDERR $@;
     };
+
+    $forkman->finish;
 }
+$forkman->wait_all_children;

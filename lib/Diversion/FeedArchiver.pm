@@ -68,11 +68,17 @@ package Diversion::FeedArchiver {
         );
 
         my $encoder = $self->sereal_encoder;
-        my $io = io->catfile($self->storage(), $t[0], "${now_ymd}.srl")->assert->mode('>>')->open->lock;
+        my $sereal_str = "";
+
         for (@bulk) {
-            $io->print($encoder->encode($_));
+            $sereal_str .=  $encoder->encode($_);
         }
-        $io->unlock;
+
+        if ($sereal_str) {
+            my $io = io->catfile($self->storage(), $t[0], "${now_ymd}.srl")->assert->mode('>>')->open->lock;
+            $io->append($sereal_Str);
+            $io->unlock;
+        }
     }
 };
 

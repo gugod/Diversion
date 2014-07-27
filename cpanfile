@@ -19,6 +19,7 @@ requires 'Mojolicious'                    => '4';
 requires 'Moo'                            => '0';
 requires 'Mozilla::CA'                    => '20130114';
 requires 'Net::Twitter'                   => '4.000006';
+requires 'Parallel::ForkManager'          => '0';
 requires 'Sereal'                         => '0';
 requires 'TOML'                           => '0';
 requires 'Test::Spec'                     => '0';
