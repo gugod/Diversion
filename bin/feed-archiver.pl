@@ -33,7 +33,10 @@ else {
 
 for (@feeds) {
     eval {
-        Diversion::FeedArchiver->new( url => $_ )->fetch_then_archive;
+        Diversion::FeedArchiver->new(
+            url => $_,
+            storage => "$ENV{HOME}/var/Diversion/archive",
+        )->fetch_then_archive;
         1;
     } or do {
         say STDERR $@;
