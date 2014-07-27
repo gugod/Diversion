@@ -76,7 +76,7 @@ package Diversion::FeedArchiver {
 
         if ($sereal_str) {
             my $io = io->catfile($self->storage(), $t[0], "${now_ymd}.srl")->assert->mode('>>')->open->lock;
-            $io->append($sereal_Str);
+            $io->append($sereal_str);
             $io->unlock;
         }
     }
