@@ -1,0 +1,23 @@
+
+* database
+
+** url archive
+
+sqlite3 ~/var/Diversion/db/uri.sqlite3 <<EOF
+
+CREATE TABLE uri_title (
+    'uri'   varchar(1024) NOT NULL,
+    'title' varchar(1024) NOT NULL
+);
+
+CREATE TABLE uri_content (
+    'uri'     varchar(1024)  NOT NULL,
+    'content' varchar(10240) NOT NULL
+);
+
+CREATE TABLE uri_extracted (
+    'uri'       varchar(1024)  NOT NULL,
+    'extracted' varchar(10240) NOT NULL
+);
+
+EOF
