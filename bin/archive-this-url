@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+use v5.18;
+
+use HTTP::Tiny;
+use Parallel::ForkManager;
+use JSON;
+use IO::All;
+use Digest::SHA1 'sha1_hex';
+
+my @feeds;
+my $feed_url = shift or die "Missing URL in arg";
+if (-f $feed_url) {
+    @feeds = grep { s/\s//g; $_ } io($feed_url)->chomp->getlines;
+} else {
+    push @feeds, $feed_url;
+}
+
+my $JSON = JSON->new->canonical->pretty;
+
+my $forkman = Parallel::ForkManager->new(4);
+for my $url (@feeds) {
+    $forkman->start and next;
+    my $digest = sha1_hex($url);
+    my $response = HTTP::Tiny->new->get($url);
+    if ( $response->{status} eq '200' ) {
+        my $header_dump_json = $JSON->encode($response->{headers});
+        my $out_dir = io->dir("$ENV{HOME}/var/Diversion/url_archive/${digest}");
+        $out_dir->catfile("headers.json")->assert->print($header_dump_json);
+        $out_dir->catfile("body")->assert->print($response->{content});
+    }
+    $forkman->finish;
+}
+$forkman->wait_all_children;
+
