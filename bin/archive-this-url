@@ -1,11 +1,15 @@
 #!/usr/bin/env perl
 use v5.18;
 
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+
+use Diversion::BlobStore;
+
+use DBI;
 use HTTP::Tiny;
-use Parallel::ForkManager;
 use JSON;
 use IO::All;
-use Digest::SHA1 'sha1_hex';
 
 my @feeds;
 my $feed_url = shift or die "Missing URL in arg";
@@ -15,20 +19,28 @@ if (-f $feed_url) {
     push @feeds, $feed_url;
 }
 
+my $dbh = DBI->connect(
+    "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/url_archive/index.sqlite3",
+    undef,
+    undef,
+    { AutoCommit => 1 }
+);
+
+my $blob_store = Diversion::BlobStore->new(
+    root => "$ENV{HOME}/var/Diversion/blob_store/"
+);
+
 my $JSON = JSON->new->canonical->pretty;
 
-my $forkman = Parallel::ForkManager->new(4);
+my $sth = $dbh->prepare(q{ INSERT INTO uri_archive(uri, content_sha1_digest, header_sha1_digest) VALUES (?,?,?)});
+
 for my $url (@feeds) {
-    $forkman->start and next;
-    my $digest = sha1_hex($url);
     my $response = HTTP::Tiny->new->get($url);
     if ( $response->{status} eq '200' ) {
         my $header_dump_json = $JSON->encode($response->{headers});
-        my $out_dir = io->dir("$ENV{HOME}/var/Diversion/url_archive/${digest}");
-        $out_dir->catfile("headers.json")->assert->print($header_dump_json);
-        $out_dir->catfile("body")->assert->print($response->{content});
+        my $header_digest = $blob_store->put($header_dump_json);
+        my $content_digest   = $blob_store->put($response->{content});
+        $sth->execute($url, $content_digest, $header_digest);
+        say "DONE $url";
     }
-    $forkman->finish;
 }
-$forkman->wait_all_children;
-
