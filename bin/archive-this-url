@@ -32,15 +32,23 @@ my $blob_store = Diversion::BlobStore->new(
 
 my $JSON = JSON->new->canonical->pretty;
 
-my $sth = $dbh->prepare(q{ INSERT INTO uri_archive(uri, content_sha1_digest, header_sha1_digest) VALUES (?,?,?)});
+my $sth_insert = $dbh->prepare(q{ INSERT INTO uri_archive(uri, created_at, content_sha1_digest, header_sha1_digest) VALUES (?,?,?,?)});
+my $sth_check = $dbh->prepare(q{ SELECT 1 FROM uri_archive WHERE uri = ? AND content_sha1_digest = ? LIMIT 1});
 
+my $http = HTTP::Tiny->new( timeout => 6 );
 for my $url (@feeds) {
-    my $response = HTTP::Tiny->new->get($url);
+    my $response = $http->get($url);
     if ( $response->{status} eq '200' ) {
         my $header_dump_json = $JSON->encode($response->{headers});
         my $header_digest = $blob_store->put($header_dump_json);
-        my $content_digest   = $blob_store->put($response->{content});
-        $sth->execute($url, $content_digest, $header_digest);
-        say "DONE $url";
+        my $content_digest = $blob_store->put($response->{content});
+
+        $sth_check->execute($url, $content_digest);
+        if ($sth_check->fetchrow_array) {
+            say "OLD $url";
+        } else {
+            $sth_insert->execute($url, 0+time, $content_digest, $header_digest);
+            say "NEW $url";
+        }
     }
 }

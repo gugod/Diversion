@@ -7,7 +7,8 @@ CREATE TABLE uri_archive (
     'uri'   varchar(1024) NOT NULL,
     'content_sha1_digest' char(40) NOT NULL,
     'header_sha1_digest' char(40) NOT NULL,
-    PRIMARY KEY (`uri`)
+    'created_at' int NOT NULL,
+    PRIMARY KEY (`uri`, `created_at`)
 );
 
 
