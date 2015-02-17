@@ -55,6 +55,8 @@ package Diversion::UrlArchiver {
         } else {
             say "ERROR: $response->{status}";
         }
+
+        return $response;
     }
 
     sub put {

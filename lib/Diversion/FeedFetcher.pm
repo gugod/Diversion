@@ -6,6 +6,8 @@ package Diversion::FeedFetcher {
     use HTTP::Tiny;
     use Encode qw(decode);
 
+    use Diversion::UrlArchiver;
+
     has url => (
         is => "ro",
         required => 1
@@ -21,8 +23,8 @@ package Diversion::FeedFetcher {
 
         my @entries;
         my $feed = { entry => \@entries };
+        my $response = Diversion::UrlArchiver->new->get( $self->url );
 
-        my $response = HTTP::Tiny->new->get($self->url);
         die "Failed to retrieve: $response->{reason}" unless $response->{success};
         die "Not OK: $response->{reason}" unless $response->{status} == 200;
 

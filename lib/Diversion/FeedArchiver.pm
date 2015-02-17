@@ -2,7 +2,6 @@ use v5.14;
 
 package Diversion::FeedArchiver {
     use Moo;
-    use HTML::Restrict;
     use Encode;
     use IO::All;
     use Digest::SHA1 qw<sha1_hex>;
@@ -10,75 +9,58 @@ package Diversion::FeedArchiver {
     
     use Log::Any qw($log);
 
+    use JSON;
+
     use Diversion::FeedFetcher;
     use Diversion::UrlFetcher;
     use Diversion::ContentExtractor;
+    use Diversion::BlobStore;
+    use Diversion::UrlArchiver;
 
-    # with ('Diversion::ElasticSearchConnector');
-
-    has url => (
+    has blob_store => (
         is => "ro",
-        required => 1
+        default => sub {
+            return Diversion::BlobStore->new(
+                root => "$ENV{HOME}/var/Diversion/blob_store/"
+            );
+        }
     );
-
-    has storage => (
+ 
+    has dbh_index =>  (
         is => "ro",
-        required => 1,
+        default => sub {
+            return DBI->connect(
+                "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/feed_archive/index.sqlite3",
+                undef,
+                undef,
+                { AutoCommit => 1 }
+            );
+        }
     );
-
-    has fetcher => (
-        is => "lazy",
-    );
-
-    has sereal_encoder => (
-        is => "lazy"
-    );
-
-    sub _build_fetcher {
-        my ($self) = @_;
-        return Diversion::FeedFetcher->new(url => $self->url);
-    }
-
-    sub _build_sereal_encoder {
-        return Sereal::Encoder->new({ croak_on_bless => 1 });
-    }
 
     sub fetch_then_archive {
-        my ($self) = @_;
+        my ($self, $url) = @_;
 
-        my @t = (gmtime)[5,4,3,2,1,0];
-        $t[0] += 1900;
-        $t[1] += 1;
-        my $now = sprintf("%4d-%02d-%02dT%02d:%02d:%02dZ", @t);
-        my $now_ymd = sprintf("%4d-%02d-%02d", @t[0,1,2]);
-        my $stripper = HTML::Restrict->new;
+        my $JSON = JSON->new->canonical->utf8->pretty;
 
-        my @bulk;
-        $self->fetcher->each_entry(
+        my $dbh = $self->dbh_index;
+        my $sth_insert = $dbh->prepare(q{ INSERT INTO feed_archive(uri, created_at, entry_sha1_digest) VALUES (?,?,?)});
+        my $sth_check = $dbh->prepare(q{ SELECT 1 FROM feed_archive WHERE uri = ? AND entry_sha1_digest = ? LIMIT 1});
+
+        Diversion::FeedFetcher->new(url => $url)->each_entry(
             sub {
                 my ($entry, $i) = @_;
-                my $data = {
-                    last_seen => $now,
-                    _source => $entry,
-                    author  => ($entry->{author} || $entry->{creator}),
-                };
-                $data->{$_} = $stripper->process($entry->{$_}) for qw(description summary);
-                push @bulk, $data;
+                my $digest = $self->blob_store->put( $JSON->encode($entry) );
+                $sth_check->execute($url, $digest);
+                unless ($sth_check->fetchrow_array) {
+                    $sth_insert->execute(
+                        $entry->{link},
+                        0+time,
+                        $digest
+                    );
+                }
             }
         );
-
-        my $encoder = $self->sereal_encoder;
-        my $sereal_str = "";
-
-        for (@bulk) {
-            $sereal_str .=  $encoder->encode($_);
-        }
-
-        if ($sereal_str) {
-            my $io = io->catfile($self->storage(), $t[0], "${now_ymd}.srl")->assert->mode('>>')->open->lock;
-            $io->append($sereal_str);
-            $io->unlock;
-        }
     }
 };
 

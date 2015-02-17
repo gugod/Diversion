@@ -32,20 +32,13 @@ else {
     push @feeds, $feed_url;
 }
 
-my $forkman = Parallel::ForkManager->new(8);
+my $feed_archiver = Diversion::FeedArchiver->new;
 for (@feeds) {
-    $forkman->start and next;
     say "Processing $_";
     eval {
-        Diversion::FeedArchiver->new(
-            url => $_,
-            storage => "$ENV{HOME}/var/Diversion/archive",
-        )->fetch_then_archive;
+        $feed_archiver->fetch_then_archive( $_ );
         1;
     } or do {
         say STDERR $@;
     };
-
-    $forkman->finish;
 }
-$forkman->wait_all_children;
