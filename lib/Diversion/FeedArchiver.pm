@@ -51,7 +51,7 @@ package Diversion::FeedArchiver {
             sub {
                 my ($entry, $i) = @_;
                 my $digest = $self->blob_store->put( $JSON->encode($entry) );
-                $sth_check->execute($url, $digest);
+                $sth_check->execute($entry->{link}, $digest);
                 unless ($sth_check->fetchrow_array) {
                     $sth_insert->execute(
                         $entry->{link},

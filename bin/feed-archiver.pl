@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
+use v5.18;
 use strict;
-use v5.14;
-use strict;
+use warnings;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use lib "$Bin/../local/lib/perl5";
