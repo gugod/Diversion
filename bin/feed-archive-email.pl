@@ -12,6 +12,7 @@ use IO::All;
 use Email::Stuffer;
 use Email::Sender::Transport::SMTP;
 
+use List::UtilsBy qw( rev_nsort_by nmax_by );
 use JSON::PP;
 use Log::Dispatch;
 use Log::Any::Adapter;
@@ -47,7 +48,12 @@ sub build_html_mail {
     my $tmpl_data = shift;
     my $body = "";
 
-    for my $entry (sort { ((defined($b->{media_content})?1:0) <=> (defined($a->{media_content}))) || $a->{title} cmp $b->{title} } @{$tmpl_data->{entries}}) {
+    my $max_title_length = nmax_by { length($_->{title}) } @{ $tmpl_data->{entries} };
+    for my $entry (rev_nsort_by {
+        ( length($_->{title}) / $max_title_length )
+        + 10 * ($_->{media_content}   ? 1 : 0)
+        + 10 * ($_->{media_thumbnail} ? 1 : 0)
+    } @{$tmpl_data->{entries}}) {
         if ($entry->{media_content} && $entry->{media_thumbnail}) {
             my $url = $entry->{link};
             $body .= qq{<div class="image"><a title="$entry->{description}" href="$url"><img alt="$entry->{description}" src="$entry->{media_thumbnail}"/></a></div>};
