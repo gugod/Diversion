@@ -12,7 +12,8 @@ use IO::All;
 use Email::Stuffer;
 use Email::Sender::Transport::SMTP;
 
-use List::UtilsBy qw( rev_nsort_by nmax_by );
+use List::UtilsBy qw( rev_nsort_by uniq_by );
+use List::Util qw( max );
 use JSON::PP;
 use Log::Dispatch;
 use Log::Any::Adapter;
@@ -48,7 +49,7 @@ sub build_html_mail {
     my $tmpl_data = shift;
     my $body = "";
 
-    my $max_title_length = nmax_by { length($_->{title}) } @{ $tmpl_data->{entries} };
+    my $max_title_length = max( map { length($_->{title}) } @{ $tmpl_data->{entries} } );
     for my $entry (rev_nsort_by {
         ( length($_->{title}) / $max_title_length )
         + 10 * ($_->{media_content}   ? 1 : 0)
