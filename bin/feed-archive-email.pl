@@ -121,7 +121,7 @@ sub main {
             my $ts = sprintf("%4d%02d%02d%02d%02d",@l);
             io->catfile($config->{output}{directory}, "$ts.html")->utf8->print($html_body);
         }
-        # send_feed_mail($config, $html_body);
+        send_feed_mail($config, $html_body);
     }
 }
 main();
