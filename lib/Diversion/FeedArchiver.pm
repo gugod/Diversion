@@ -2,6 +2,7 @@ use v5.14;
 
 package Diversion::FeedArchiver {
     use Moo;
+
     use Encode;
     use IO::All;
     use Digest::SHA1 qw<sha1_hex>;
@@ -11,22 +12,14 @@ package Diversion::FeedArchiver {
 
     use JSON;
 
+    with "Diversion::AppRole";
+
     use Diversion::FeedFetcher;
     use Diversion::UrlFetcher;
     use Diversion::ContentExtractor;
-    use Diversion::BlobStore;
     use Diversion::UrlArchiver;
-
-    has blob_store => (
-        is => "ro",
-        default => sub {
-            return Diversion::BlobStore->new(
-                root => "$ENV{HOME}/var/Diversion/blob_store/"
-            );
-        }
-    );
  
-    has dbh_index =>  (
+    has dbh_index => (
         is => "ro",
         default => sub {
             return DBI->connect(

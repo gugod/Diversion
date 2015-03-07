@@ -7,7 +7,8 @@ package Diversion::UrlArchiver {
     use DBI;
     use Digest::SHA1 'sha1_hex';
 
-    use Diversion::BlobStore;
+
+    with 'Diversion::AppRole';
 
     has dbh_index =>  (
         is => "ro",
@@ -17,15 +18,6 @@ package Diversion::UrlArchiver {
                 undef,
                 undef,
                 { AutoCommit => 1 }
-            );
-        }
-    );
-
-    has blob_store => (
-        is => "ro",
-        default => sub {
-            return Diversion::BlobStore->new(
-                root => "$ENV{HOME}/var/Diversion/blob_store/"
             );
         }
     );
