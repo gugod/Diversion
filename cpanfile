@@ -1,5 +1,6 @@
 requires 'DateTime'                       => '0';
 requires 'DateTime::Duration'             => '0';
+requires 'DateTime::Format::RSS'          => '0.03000';
 requires 'DBI'                            => '0';
 requires 'DBD::SQLite'                    => '1.46';
 requires 'Devel::StackTrace'              => '1.30';

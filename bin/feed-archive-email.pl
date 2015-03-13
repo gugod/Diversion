@@ -17,6 +17,7 @@ use List::Util qw( max );
 use JSON::PP;
 use Log::Dispatch;
 use Log::Any::Adapter;
+use DateTime::Format::RSS;
 
 Log::Any::Adapter->set(
     'Dispatch',
@@ -46,15 +47,19 @@ sub send_feed_mail {
 }
 
 sub build_html_mail {
+    my $JSON = JSON::PP->new->utf8;
+
     my $tmpl_data = shift;
     my $body = "";
-
+    my $fmt = DateTime::Format::RSS->new;
     my $max_title_length = max( map { length($_->{title}) } @{ $tmpl_data->{entries} } );
     for my $entry (rev_nsort_by {
-        ( length($_->{title}) / $max_title_length )
-        + 10 * ($_->{media_content}   ? 1 : 0)
-        + 10 * ($_->{media_thumbnail} ? 1 : 0)
+        ($_->{pubDate} ? $fmt->parse_datetime($_->{pubDate})->epoch : 1000)
+        + 10  * ( ($_->{media_content}   ? 1 : 0) + ($_->{media_thumbnail} ? 1 : 0) )
+        + ( length($_->{title}) / $max_title_length )
     } @{$tmpl_data->{entries}}) {
+        # $body .= "\n<pre>".$JSON->encode($entry)."</pre>\n";
+        $body .= "\n";
         if ($entry->{media_content} && $entry->{media_thumbnail}) {
             my $url = $entry->{link};
             $body .= qq{<div class="image"><a title="$entry->{description}" href="$url"><img alt="$entry->{description}" src="$entry->{media_thumbnail}"/></a></div>};
@@ -103,7 +108,7 @@ sub main {
     my $dbh = $feed_archiver->dbh_index;
     my $blob_store = $feed_archiver->blob_store;
 
-    my $rows = $dbh->selectall_arrayref('SELECT uri, created_at, entry_sha1_digest FROM feed_archive WHERE created_at > ?', {Slice=>{}}, (time - 86400));
+    my $rows = $dbh->selectall_arrayref('SELECT uri, created_at, entry_sha1_digest FROM feed_archive WHERE created_at > ? LIMIT 1000', {Slice=>{}}, (time - 86400));
 
     my $JSON = JSON::PP->new->utf8;
     my $tmpl_data = {};
