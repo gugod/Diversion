@@ -54,7 +54,8 @@ sub build_html_mail {
     my $fmt = DateTime::Format::RSS->new;
     my $max_title_length = max( map { length($_->{title}) } @{ $tmpl_data->{entries} } );
     for my $entry (rev_nsort_by {
-        ($_->{pubDate} ? $fmt->parse_datetime($_->{pubDate})->epoch : 1000)
+        my $dt = $_->{pubDate} ? $fmt->parse_datetime($_->{pubDate}) : undef;
+        ($dt ? $dt->epoch : 1000)
         + 10  * ( ($_->{media_content}   ? 1 : 0) + ($_->{media_thumbnail} ? 1 : 0) )
         + ( length($_->{title}) / $max_title_length )
     } @{$tmpl_data->{entries}}) {
