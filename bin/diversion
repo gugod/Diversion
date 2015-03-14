@@ -1,0 +1,15 @@
+#!/usr/bin/env perl
+use v5.18;
+use Log::Dispatch;
+use Log::Any::Adapter;
+
+my $log = Log::Dispatch->new(
+    outputs => [
+        [ 'File', min_level => "debug", filename => "/tmp/diversion.log" ],
+        [ 'Screen', min_level => "debug" ],
+    ]
+);
+Log::Any::Adapter->set('Dispatch', dispatcher => $log);
+
+use Diversion::App;
+Diversion::App->run;

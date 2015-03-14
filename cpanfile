@@ -1,3 +1,4 @@
+requires 'App::Cmd'                       => '0.327';
 requires 'DateTime'                       => '0';
 requires 'DateTime::Duration'             => '0';
 requires 'DateTime::Format::RSS'          => '0.03000';
