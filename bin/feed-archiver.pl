@@ -2,15 +2,17 @@
 use v5.18;
 use strict;
 use warnings;
-use FindBin qw($Bin);
-use lib "$Bin/../lib";
-use lib "$Bin/../local/lib/perl5";
-use Diversion::FeedArchiver;
+
 use IO::All;
 use Log::Dispatch;
 use Log::Any::Adapter;
 use Carp qw(cluck);
-use Parallel::ForkManager;
+use List::Util qw(shuffle);
+
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
+use lib "$Bin/../local/lib/perl5";
+use Diversion::FeedArchiver;
 
 # $SIG{__DIE__} = sub { Carp::cluck(@_); exit };
 
@@ -33,7 +35,7 @@ else {
 }
 
 my $feed_archiver = Diversion::FeedArchiver->new;
-for (@feeds) {
+for (shuffle @feeds) {
     say "Processing $_";
     eval {
         $feed_archiver->fetch_then_archive( $_ );
