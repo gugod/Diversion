@@ -1,10 +1,14 @@
 #!/usr/bin/env perl
 use v5.18;
-use FindBin;
-use lib "$FindBin::Bin/../lib";
 
 use Log::Dispatch;
 use Log::Any::Adapter;
+use File::XDG;
+use TOML qw(from_toml);
+use FindBin;
+
+use lib "$FindBin::Bin/../lib";
+use Diversion::App;
 
 Log::Any::Adapter->set(
     'Dispatch',
@@ -16,5 +20,10 @@ Log::Any::Adapter->set(
     )
 );
 
-use Diversion::App;
-Diversion::App->run;
+my $xdg = File::XDG->new( name => "diversion" );
+
+my $config_file = $xdg->config_home->file("config.toml");
+my $config = from_toml(scalar $config_file->slurp);
+
+Diversion::App->new->set_config($config)->run;
+
