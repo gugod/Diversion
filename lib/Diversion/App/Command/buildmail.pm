@@ -13,6 +13,12 @@ use Log::Any qw($log);
 
 use Diversion::FeedArchiver;
 
+sub opt_spec {
+    return (
+        ["ago=i", "Include entries created up to this second ago.", { default => 86400 }]
+    )
+}
+
 sub execute {
     my ($self, $opt, $args) = @_;
 
@@ -21,7 +27,7 @@ sub execute {
     my $dbh = $feed_archiver->dbh_index;
     my $blob_store = $feed_archiver->blob_store;
 
-    my $rows = $dbh->selectall_arrayref('SELECT uri, created_at, entry_sha1_digest FROM feed_archive WHERE created_at > ?', {Slice=>{}}, (time - 86400));
+    my $rows = $dbh->selectall_arrayref('SELECT uri, created_at, entry_sha1_digest FROM feed_archive WHERE created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
 
     my $JSON = JSON::PP->new->utf8;
     my $tmpl_data = {};
