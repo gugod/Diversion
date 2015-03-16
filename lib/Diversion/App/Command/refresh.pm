@@ -1,4 +1,4 @@
-package Diversion::App::Command::crawl;
+package Diversion::App::Command::refresh;
 use v5.18;
 use App::Cmd -command;
 
