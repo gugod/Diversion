@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>Subscription updates</title>
+        <style type="text/css">
+            body { padding: 1em; }
+            img { vertical-align: top }
+            .image { display: inline-block; padding: 5px; max-width: 600px; }
+            .image img { width: 100% }
+            .text { display: block; }
+        </style>
+    </head>
+    <body>
+        <ul>
+            : for $entries -> $entry {
+            <li class="<: $entry.has_image ? 'image' : 'text' :>">
+                <a href="<: $entry.link :>">
+                    : if $entry.media_thumbnail {
+                    <img src="<: $entry.media_thumbnail :>">
+                    : } else {
+                    <: $entry.title :>
+                    : }
+                </a>
+                <p><: $entry.description :></p>
+            </li>
+            : }
+        </ul>
+    </body>
+</html>
