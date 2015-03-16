@@ -53,7 +53,7 @@ sub build_html_mail {
         ($dt ? $dt->epoch : 1000)
         + 10  * ( ($_->{media_content}   ? 1 : 0) + ($_->{media_thumbnail} ? 1 : 0) )
         + ( length($_->{title}) / $max_title_length )
-    } @{$tmpl_data->{entries}} ];
+    } grep { defined($_->{link}) } @{$tmpl_data->{entries}} ];
 
     for my $x (@{$tmpl_data->{entries}}) {
         $x->{has_image} = ($x->{media_thumbnail} && $x->{media_content});
