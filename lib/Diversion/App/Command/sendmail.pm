@@ -1,0 +1,46 @@
+package Diversion::App::Command::sendmail;
+use v5.18;
+use App::Cmd -command;
+
+use IO::All;
+use Email::Stuffer;
+use Email::Sender::Transport::SMTP;
+
+use Log::Any qw($log);
+
+sub execute {
+    my ($self) = @_;
+
+    my $output_dir = $self->app->config->{output}{directory} || "/tmp";
+    my @emails = io->dir($output_dir)->glob("diversion-mail-*.html");
+
+    return 0 unless @emails;
+
+    my @latest = ($emails[0]->mtime, $emails[0]);
+
+    for (my $i = 1; $i < $#emails; $i++) {
+        my $t = $emails[$i]->mtime;
+        if ($t > $latest[0]) {
+            $latest[0] = $t;
+            $latest[1] = $emails[$i];
+        }
+    }
+
+    send_feed_mail($self->app->config, $latest[1]->slurp);
+}
+
+sub send_feed_mail {
+    my ($config, $mail_body) = @_;
+
+    my $email = Email::Stuffer->new;
+    $email->transport("SMTP", $config->{smtp}) if exists $config->{smtp};
+    $email->subject( $config->{email}{subject} || "feed updates" );
+    $email->from( $config->{email}{from} );
+    $email->to( $config->{email}{to} );
+
+    $email->html_body( $mail_body );
+
+    $email->send();
+}
+
+1;
