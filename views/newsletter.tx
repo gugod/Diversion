@@ -4,27 +4,34 @@
         <meta charset="utf-8"/>
         <title>Subscription updates</title>
         <style type="text/css">
-            body { padding: 1em; }
-            img { vertical-align: top }
-            .image { display: inline-block; padding: 5px; max-width: 600px; }
-            .image img { width: 100% }
-            .text { display: block; }
+            body { padding: 1em; font-size: 14pt; }
+            img { vertical-align: top; margin-right: 1em; float: left; }
+            time { color: #777; font-size: 75%; }
+            article:after { clear: both; }
+            article p { max-height: 3em; overflow: hidden; }
+            article p:active { max-height: 30em; }
         </style>
     </head>
     <body>
-        <ul>
-            : for $entries -> $entry {
-            <li class="<: $entry.has_image ? 'image' : 'text' :>">
-                <a href="<: $entry.link :>">
-                    : if $entry.media_thumbnail {
-                    <img src="<: $entry.media_thumbnail :>">
-                    : } else {
-                    <: $entry.title :>
-                    : }
-                </a>
-                <p><: $entry.description :></p>
-            </li>
+
+        : for $entries -> $entry {
+        <article class="<: $entry.has_image ? 'image' : 'text' :>">
+            <header>
+                <a href="<: $entry.link :>"><: $entry.title :></a>
+                <time><: $entry.pubDate :></time>
+            </header>
+            <p>
+            : if $entry.media_thumbnail {
+            :     if $entry.media_content {
+            <a href="<: $entry.media_content :>"><img src="<: $entry.media_thumbnail :>"></a>
+            :     } else {
+            <img src="<: $entry.media_thumbnail :>">
+            :     }
             : }
-        </ul>
+                <: $entry.description :>
+            </p>
+        </article>
+        : }
+
     </body>
 </html>
