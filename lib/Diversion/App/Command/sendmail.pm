@@ -1,6 +1,6 @@
 package Diversion::App::Command::sendmail;
 use v5.18;
-use App::Cmd -command;
+use Diversion::App -command;
 
 use IO::All;
 use Email::Stuffer;
@@ -26,7 +26,7 @@ sub execute {
         }
     }
 
-    send_feed_mail($self->app->config, scalar $latest[1]->slurp);
+    send_feed_mail($self->app->config, $latest[1]->slurp);
 }
 
 sub send_feed_mail {

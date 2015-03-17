@@ -1,6 +1,6 @@
 package Diversion::App::Command::refresh;
 use v5.18;
-use App::Cmd -command;
+use Diversion::App -command;
 
 use IO::All;
 use List::Util qw(shuffle);
