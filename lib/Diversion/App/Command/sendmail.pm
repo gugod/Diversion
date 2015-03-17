@@ -26,7 +26,7 @@ sub execute {
         }
     }
 
-    send_feed_mail($self->app->config, $latest[1]->slurp);
+    send_feed_mail($self->app->config, scalar $latest[1]->utf8->slurp);
 }
 
 sub send_feed_mail {
