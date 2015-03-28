@@ -33,7 +33,12 @@ sub execute {
     my $tmpl_data = {};
     for my $row (@$rows) {
         my $b = $blob_store->get($row->{entry_sha1_digest});
-        push @{ $tmpl_data->{entries} }, $JSON->decode($b);
+        eval {
+            push @{ $tmpl_data->{entries} }, $JSON->decode($b);
+            1;
+        } or do {
+            warn "FAIL unmarshalling the content from $row->{entry_sha1_digest}\n";
+        };
     }
     my $html_body = build_html_mail($tmpl_data);
 
