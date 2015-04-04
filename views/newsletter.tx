@@ -28,7 +28,6 @@
             <img src="<: $entry.media_thumbnail :>">
             :     }
             : }
-                <: $entry.description :>
             </p>
         </article>
         : }
