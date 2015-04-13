@@ -9,6 +9,7 @@ use List::UtilsBy qw( rev_nsort_by uniq_by );
 use List::Util qw( max );
 use Text::Xslate;
 
+use File::ShareDir;
 use Log::Any qw($log);
 
 use Diversion::FeedArchiver;
@@ -69,8 +70,9 @@ sub build_html_mail {
     for my $x (@{$tmpl_data->{entries}}) {
         $x->{has_image} = ($x->{media_thumbnail} && $x->{media_content});
     }
-    my $tx = Text::Xslate->new( path => [ "views" ] );
 
+    my $tmpl_dir = File::ShareDir::dist_dir('Diversion', "views");
+    my $tx = Text::Xslate->new( path => [ $tmpl_dir ]);
     return scalar $tx->render("newsletter.tx", $tmpl_data);
 }
 

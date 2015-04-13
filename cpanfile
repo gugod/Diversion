@@ -1,3 +1,4 @@
+requires 'File::ShareDir'                 => '1.102';
 requires 'Text::Xslate'                   => '3.2.5';
 requires 'App::Cmd'                       => '0.327';
 requires 'DateTime'                       => '0';
