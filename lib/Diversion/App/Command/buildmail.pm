@@ -59,11 +59,13 @@ sub build_html_mail {
 
     my $fmt = DateTime::Format::RSS->new;
     my $max_title_length = max( map { length($_->{title}) } @{ $tmpl_data->{entries} } );
+    my $max_description_length = max( map { length($_->{description}) } @{ $tmpl_data->{entries} } );
 
     $tmpl_data->{entries} = [ rev_nsort_by {
         my $dt = $_->{pubDate} ? $fmt->parse_datetime($_->{pubDate}) : undef;
         ($dt ? $dt->epoch : 1000)
-        + 10  * ( ($_->{media_content}   ? 1 : 0) + ($_->{media_thumbnail} ? 1 : 0) )
+        + ( ($_->{media_content}   ? 1 : 0) + ($_->{media_thumbnail} ? 1 : 0) )
+        + ( length($_->{description_length}) / $max_description_length )
         + ( length($_->{title}) / $max_title_length )
     } grep { defined($_->{link}) } @{$tmpl_data->{entries}} ];
 
@@ -72,6 +74,10 @@ sub build_html_mail {
     }
 
     my $tmpl_dir = File::ShareDir::dist_dir('Diversion') . "/views";
+    unless (-d $tmpl_dir) {
+        $tmpl_dir = "share/views";
+    }
+
     my $tx = Text::Xslate->new( path => [ $tmpl_dir ]);
     return scalar $tx->render("newsletter.tx", $tmpl_data);
 }

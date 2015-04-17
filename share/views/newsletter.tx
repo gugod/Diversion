@@ -8,8 +8,6 @@
             img { vertical-align: top; margin-right: 1em; float: left; }
             time { color: #777; font-size: 75%; }
             article:after { clear: both; }
-            article p { max-height: 3em; overflow: hidden; }
-            article p:active { max-height: 30em; }
         </style>
     </head>
     <body>
@@ -28,6 +26,7 @@
             <img src="<: $entry.media_thumbnail :>">
             :     }
             : }
+            <: $entry.description :>
             </p>
         </article>
         : }
