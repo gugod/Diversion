@@ -1,7 +1,9 @@
 package Diversion::BlobStore;
 use Moo;
 use Digest::SHA1 qw(sha1_hex);
-use IO::All;
+use File::Spec;
+use File::Path qw(make_path);
+use PerlIO::via::gzip;
 
 has root => (
     is => "rw",
@@ -15,33 +17,55 @@ has digest_function => (
     }
 );
 
-sub _io {
+sub _fh_ro {
     my ($self, $digest) = @_;
-    my @s = grep $_, split /(....)/, $digest;
-    my $o = io->catfile($self->root, @s);
-    return $o;
+    my $fh;
+    my $f = $self->_filename($digest);
+    my $f_gz = $f . ".gz";
+    if (-f $f_gz) {
+	open $fh, "<:via(gzip)", $f_gz;
+    } elsif (-f $f) {
+	open $fh, "<", $f;
+    }
+    return $fh;
+}
+
+sub _fh_rw {
+    my ($self, $digest) = @_;
+    my ($path, $f) = $self->_filename($digest);
+    my $f_gz = $f . ".gz";
+    return undef if -f $f_gz || -f $f;
+    make_path($path) unless -d $path;
+    open(my $fh, ">", $f) or die $!;
+    return $fh;
+}
+
+sub _filename {
+    my ($self, $digest) = @_;
+    my @xs = grep { $_ ne "" } split /(....)/, $digest;
+    my $x = pop @xs;
+    my $path = File::Spec->catdir($self->root, @xs);
+    my $file = File::Spec->catfile($path, $x);
+    return ($path, $file);
 }
 
 sub put {
     my ($self, $data) = @_;
     my $digest = $self->digest_function->($data);
-    my $o = $self->_io($digest);
-    $o->assert->print($data) unless $o->exists;
+    if (my $fh = $self->_fh_rw($digest)) {
+	print $fh $data;
+    }
     return $digest;
 }
 
 sub get {
     my ($self, $digest) = @_;
-    my $o = $self->_io($digest);
-    return undef unless $o->exists;
-    return $o->all;
-}
-
-sub get_path {
-    my ($self, $digest) = @_;
-    my $o = $self->_io($digest);
-    return undef unless $o->exists;
-    return $o->pathname;
+    my $fh = $self->_fh_ro($digest);
+    if ($fh) {
+	local $/ = undef;
+	return scalar <$fh>;
+    }
+    return undef;
 }
 
 1;
