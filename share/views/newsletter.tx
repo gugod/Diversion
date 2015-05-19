@@ -4,14 +4,10 @@
         <meta charset="utf-8"/>
         <title>Subscription updates</title>
         <style type="text/css">
-            body { padding: 1em; font-size: 14pt; }
-            img { vertical-align: top; margin-right: 1em; float: left; }
-            time { color: #777; font-size: 75%; }
-            article:after { clear: both; }
+            time { color: #777; font-size: 50%; }
         </style>
     </head>
     <body>
-
         : for $entries -> $entry {
         <article class="<: $entry.has_image ? 'image' : 'text' :>">
             <header>
@@ -26,10 +22,8 @@
             <img src="<: $entry.media_thumbnail :>">
             :     }
             : }
-            <: $entry.description :>
             </p>
         </article>
         : }
-
     </body>
 </html>
