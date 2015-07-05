@@ -19,9 +19,9 @@ sub execute {
         push @feeds, $feed_url;
     }
 
-    my $feed_archiver = Diversion::FeedArchiver->new;
     for (shuffle @feeds) {
-        say "Processing $_";
+        my $feed_archiver = Diversion::FeedArchiver->new;
+        say "[pid=$$] Processing $_";
         eval {
             $feed_archiver->fetch_then_archive( $_ );
             1;
@@ -29,7 +29,6 @@ sub execute {
             say STDERR $@;
         };
     }
-
 }
 
 1;
