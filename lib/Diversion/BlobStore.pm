@@ -5,6 +5,8 @@ use File::Spec;
 use File::Path qw(make_path);
 use PerlIO::via::gzip;
 
+use RocksDB;
+
 has root => (
     is => "rw",
     required => 1,
@@ -17,55 +19,25 @@ has digest_function => (
     }
 );
 
-sub _fh_ro {
-    my ($self, $digest) = @_;
-    my $fh;
-    my $f = $self->_filename($digest);
-    my $f_gz = $f . ".gz";
-    if (-f $f_gz) {
-	open $fh, "<:via(gzip)", $f_gz;
-    } elsif (-f $f) {
-	open $fh, "<", $f;
-    }
-    return $fh;
-}
+has db => ( is => "lazy" );
 
-sub _fh_rw {
-    my ($self, $digest) = @_;
-    my ($path, $f) = $self->_filename($digest);
-    my $f_gz = $f . ".gz";
-    return undef if -f $f_gz || -f $f;
-    make_path($path) unless -d $path;
-    open(my $fh, ">", $f) or die $!;
-    return $fh;
-}
-
-sub _filename {
-    my ($self, $digest) = @_;
-    my @xs = grep { $_ ne "" } split /(....)/, $digest;
-    my $x = pop @xs;
-    my $path = File::Spec->catdir($self->root, @xs);
-    my $file = File::Spec->catfile($path, $x);
-    return ($path, $file);
+sub _build_db {
+    my ($self) = @_;
+    return RocksDB->new( $self->root, { create_if_missing => 1 });
 }
 
 sub put {
     my ($self, $data) = @_;
     my $digest = $self->digest_function->($data);
-    if (my $fh = $self->_fh_rw($digest)) {
-	print $fh $data;
-    }
+    $self->db->put("blob $digest", $data);
     return $digest;
 }
 
 sub get {
     my ($self, $digest) = @_;
-    my $fh = $self->_fh_ro($digest);
-    if ($fh) {
-	local $/ = undef;
-	return scalar <$fh>;
-    }
-    return undef;
+    my $db = $self->db;
+    my $k = "blob $digest";
+    return $db->exists($k) ? $db->get($k) : undef;
 }
 
 1;
