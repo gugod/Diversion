@@ -73,9 +73,9 @@ sub build_html_mail {
         $x->{has_image} = ($x->{media_thumbnail} && $x->{media_content});
     }
 
-    my $tmpl_dir = File::ShareDir::dist_dir('Diversion') . "/views";
+    my $tmpl_dir = "share/views";
     unless (-d $tmpl_dir) {
-        $tmpl_dir = "share/views";
+        $tmpl_dir = File::ShareDir::dist_dir('Diversion') . "/views";
     }
 
     my $tx = Text::Xslate->new( path => [ $tmpl_dir ]);
