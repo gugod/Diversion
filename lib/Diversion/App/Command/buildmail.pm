@@ -28,19 +28,15 @@ sub execute {
     my $dbh = $feed_archiver->dbh_index;
     my $blob_store = $feed_archiver->blob_store;
 
-    my $rows = $dbh->selectall_arrayref('SELECT uri, created_at, entry_sha1_digest FROM feed_archive WHERE created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
+    my $rows = $dbh->selectall_arrayref('SELECT uri, created_at, entry_json FROM feed_entries WHERE created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
 
     my $JSON = JSON::PP->new->utf8;
     my $tmpl_data = {};
     for my $row (@$rows) {
-        my $b = $blob_store->get($row->{entry_sha1_digest});
-        eval {
-            push @{ $tmpl_data->{entries} }, $JSON->decode($b);
-            1;
-        } or do {
-            warn "FAIL unmarshalling the content from $row->{entry_sha1_digest}\n";
-        };
+        my $entry = $JSON->decode($row->{entry_json});
+        push @{ $tmpl_data->{entries} }, $entry;
     }
+
     my $html_body = build_html_mail($tmpl_data);
 
     if ($html_body) {
