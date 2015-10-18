@@ -72,8 +72,8 @@ package Diversion::FeedFetcher {
 
                 unless ($entry->{link}) {
                     for my $e2 ($el->find("link")->each) {
-                        my $type = $e2->attr("type");
-                        my $rel = $e2->attr("rel");
+                        my $type = $e2->attr("type") or next;
+                        my $rel = $e2->attr("rel")   or next;
                         if ($type eq "text/html" && $rel eq "alternate") {
                             $entry->{link} = $e2->attr("href");
                         }
