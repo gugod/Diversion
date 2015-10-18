@@ -40,20 +40,12 @@ package Diversion::FeedArchiver {
         my $sth_insert = $dbh->prepare(q{ INSERT INTO feed_archive(uri, created_at, entry_sha1_digest) VALUES (?,?,?)});
         my $sth_check = $dbh->prepare(q{ SELECT 1 FROM feed_archive WHERE uri = ? AND entry_sha1_digest = ? LIMIT 1});
 
-        Diversion::FeedFetcher->new(url => $url)->each_entry(
-            sub {
-                my ($entry, $i) = @_;
-                my $digest = $self->blob_store->put( $JSON->encode($entry) );
-                $sth_check->execute($entry->{link}, $digest);
-                unless ($sth_check->fetchrow_array) {
-                    $sth_insert->execute(
-                        $entry->{link},
-                        0+time,
-                        $digest
-                    );
-                }
-            }
-        );
+        my $feed_json = $JSON->encode( Diversion::FeedFetcher->new(url => $url)->feed );
+        my $digest = $self->blob_store->put( $feed_json );
+        $sth_check->execute($url, $digest);
+        unless ($sth_check->fetchrow_array) {
+            $sth_insert->execute($url, 0+time, $digest);
+        }
     }
 };
 
