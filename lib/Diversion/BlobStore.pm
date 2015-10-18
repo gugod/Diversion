@@ -42,11 +42,11 @@ sub _fh_rw {
 
 sub _filename {
     my ($self, $digest) = @_;
-    my @xs = grep { $_ ne "" } split /(....)/, $digest;
-    my $x = pop @xs;
-    my $path = File::Spec->catdir($self->root, @xs);
-    my $file = File::Spec->catfile($path, $x);
-    return ($path, $file);
+    my $pre  = substr($digest,0,4);
+    my $suf = substr($digest,4);
+    my $dir = File::Spec->catdir($self->root, $pre);
+    my $file = File::Spec->catfile($dir, $suf);
+    return ($dir, $file);
 }
 
 sub put {
