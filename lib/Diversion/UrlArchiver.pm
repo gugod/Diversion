@@ -6,7 +6,7 @@ package Diversion::UrlArchiver {
     use JSON;
     use DBI;
     use Digest::SHA1 'sha1_hex';
-
+    use Data::Binary qw(is_binary);
 
     with 'Diversion::AppRole';
 
@@ -25,34 +25,32 @@ package Diversion::UrlArchiver {
     sub get {
         my ($self, $url) = @_;
         my $blob_store = $self->blob_store;
-        my $http = HTTP::Tiny->new( timeout => 6 );
+
+        my $http = HTTP::Tiny->new( timeout => 60 );
         my $JSON = JSON->new->canonical->pretty;
         my $response = $http->get($url);
         my $dbh = $self->dbh_index;
-        my $sth_insert = $dbh->prepare(q{ INSERT INTO uri_archive(uri, created_at, content_sha1_digest, header_sha1_digest) VALUES (?,?,?,?)});
-        my $sth_check = $dbh->prepare(q{ SELECT 1 FROM uri_archive WHERE uri = ? AND content_sha1_digest = ? LIMIT 1});
+        my $sth_insert = $dbh->prepare(q{ INSERT INTO uri_archive(uri, created_at, sha1_digest) VALUES (?,?,?)});
+        my $sth_check = $dbh->prepare(q{ SELECT 1 FROM uri_archive WHERE uri = ? AND sha1_digest = ? LIMIT 1});
 
-        if ( $response->{status} eq '200' ) {
-            my $header_dump_json = $JSON->encode($response->{headers});
-            my $header_digest = $blob_store->put($header_dump_json);
-            my $content_digest = $blob_store->put($response->{content});
+        if (is_binary($response->{content})) {
+            my $content = delete $response->{content};
+            my $content_digest = $blob_store->put($content);
+            $response->{content} = { sha1_digest => $content_digest };
+        }
 
-            $sth_check->execute($url, $content_digest);
-            if ($sth_check->fetchrow_array) {
-                say "OLD $url";
-            } else {
-                $sth_insert->execute($url, 0+time, $content_digest, $header_digest);
-                say "NEW $url";
-            }
+        my $response_json = $JSON->encode($response);
+        my $response_digest = $blob_store->put($response_json);
+
+        $sth_check->execute($url, $response_digest);
+        if ($sth_check->fetchrow_array) {
+            say "OLD $url";
         } else {
-            say "ERROR: $response->{status}";
+            $sth_insert->execute($url, 0+time, $response_digest);
+            say "STORE $url " . ( ref($response->{content}) ? "#binary" : "" );
         }
 
         return $response;
     }
-
-    sub put {
-    }
-
 };
 1;

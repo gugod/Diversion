@@ -44,3 +44,4 @@ requires 'XML::Loy'                       => '0.19';
 requires 'XML::XPath'                     => '0';
 requires 'RocksDB'                        => '0';
 requires 'PerlIO::Util'                   => '0';
+requires 'Data::Binary'                   => '0';

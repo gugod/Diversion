@@ -34,8 +34,7 @@ sqlite3 ~/var/Diversion/db/uri.sqlite3 <<EOF
 CREATE TABLE uri_archive (
     'uri'   varchar(1024) NOT NULL,
     'created_at' int NOT NULL,
-    'content_sha1_digest' char(40) NOT NULL,
-    'header_sha1_digest' char(40) NOT NULL,
+    'sha1_digest' char(40) NOT NULL,
     PRIMARY KEY (`uri`, `created_at`)
 );
 
