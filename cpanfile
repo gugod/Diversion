@@ -42,3 +42,5 @@ requires 'Web::Query'                     => '0';
 requires 'XML::FeedPP'                    => '0';
 requires 'XML::Loy'                       => '0.19';
 requires 'XML::XPath'                     => '0';
+requires 'RocksDB'                        => '0';
+requires 'PerlIO::Util'                   => '0';
