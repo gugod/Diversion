@@ -24,6 +24,19 @@ package Diversion::UrlArchiver {
         }
     );
 
+    sub get_local {
+        my ($self, $url) = @_;
+        my $dbh = $self->dbh_index;
+        my ($sha1_digest) = @{$dbh->selectcol_arrayref(q{ SELECT sha1_digest FROM uri_archive WHERE uri = ? ORDER BY created_at DESC LIMIT 1},{}, $url)};
+        return undef unless defined $sha1_digest;
+        my $blob_store = $self->blob_store;
+        if (my $response = $blob_store->get($sha1_digest)) {
+            return $JSON->decode($response);
+        }
+        return undef;
+    }
+
+
     sub get {
         my ($self, $url) = @_;
 
