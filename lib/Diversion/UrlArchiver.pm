@@ -36,12 +36,8 @@ package Diversion::UrlArchiver {
         return undef;
     }
 
-
-    sub get {
+    sub get_remote {
         my ($self, $url) = @_;
-
-        my $response = $self->get_local($url);
-        return $response if defined $response;
 
         my $blob_store = $self->blob_store;
 
@@ -58,7 +54,14 @@ package Diversion::UrlArchiver {
             my $sth_insert = $dbh->prepare(q{ INSERT INTO uri_archive(uri, created_at, sha1_digest) VALUES (?,?,?)});
             $sth_insert->execute($url, 0+time, $response_digest);
         }
-        return $response;
+        return $response;        
+    }
+
+    sub get {
+        my ($self, $url) = @_;
+        my $response = $self->get_local($url);
+        return $response if defined $response;
+        return $self->get_remote($url);
     }
 };
 1;
