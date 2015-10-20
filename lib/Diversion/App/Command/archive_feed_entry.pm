@@ -2,14 +2,8 @@ package Diversion::App::Command::archive_feed_entry;
 use v5.18;
 use Diversion::App -command;
 
-use IO::All;
-use JSON::PP;
-use DateTime::Format::RSS;
-use List::UtilsBy qw( rev_nsort_by uniq_by );
 use List::Util qw( shuffle );
-use Text::Xslate;
 
-use File::ShareDir;
 use Log::Any qw($log);
 
 use Diversion::UrlArchiver;
@@ -28,7 +22,10 @@ sub execute {
     my $rows = $dbh->selectall_arrayref('SELECT uri FROM feed_entries WHERE created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
     my $o = Diversion::UrlArchiver->new;
     for my $row (shuffle @$rows) {
-        $o->get($row->{uri}) unless $o->get_local($row->{uri});
+        unless ($o->get_local($row->{uri})) {
+            $o->get($row->{uri});
+            $log->info("STORE $row->{uri}\n");
+        }
     }
 }
 
