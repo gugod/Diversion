@@ -6,6 +6,7 @@ use List::Util qw( shuffle );
 
 use Log::Any qw($log);
 
+use Parallel::ForkManager;
 use Diversion::UrlArchiver;
 use Diversion::FeedArchiver;
 
@@ -22,13 +23,17 @@ sub execute {
     my $rows = $dbh->selectall_arrayref('SELECT uri FROM feed_entries WHERE created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
     $dbh->disconnect;
 
+    my $forkman = Parallel::ForkManager->new(4);
     my $o = Diversion::UrlArchiver->new;
     for my $row (shuffle @$rows) {
         unless ($o->get_local($row->{uri})) {
+            $forkman->start and next;
             $o->get($row->{uri});
-            $log->info("STORE $row->{uri}\n");
+            $log->info("[$$] STORE $row->{uri}\n");
+            $forkman->finish;
         }
     }
+    $forkman->wait_all_children;
 }
 
 1;
