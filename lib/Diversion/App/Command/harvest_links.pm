@@ -20,19 +20,34 @@ sub execute {
     my $url_archiver = Diversion::UrlArchiver->new;
     my $dbh = $url_archiver->dbh_index;
     my $rows = $dbh->selectall_arrayref('SELECT distinct uri,sha1_digest FROM uri_archive WHERE created_at > ?', {}, (time - $opt->{ago}));
+
+    my @harvested_links;
     for my $row (shuffle @$rows) {
         my ($uri, $sha1_digest) = @$row[0,1];
         my $response = $url_archiver->get_local($uri);
         if ($response->{success}) {
             my $links = find_links($response);
-            for my $u (@$links) {
+            push @harvested_links, @$links;
+        }
+
+        if (@harvested_links > 1000) {
+            for my $u (shuffle @harvested_links) {
                 unless ($url_archiver->get_local($u)) {
                     $url_archiver->get_remote($u);
                     $log->info("HARVEST $u\n");
                 }
             }
+            @harvested_links = ();
         }
     }
+
+    for my $u (shuffle @harvested_links) {
+        unless ($url_archiver->get_local($u)) {
+            $url_archiver->get_remote($u);
+            $log->info("HARVEST $u\n");
+        }
+    }
+    @harvested_links = ();
 }
 
 sub find_links {
