@@ -29,6 +29,7 @@ sub execute {
     my $blob_store = $feed_archiver->blob_store;
 
     my $rows = $dbh->selectall_arrayref('SELECT uri, created_at, entry_json FROM feed_entries WHERE created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
+    $dbh->disconnect;
 
     my $JSON = JSON::PP->new->utf8;
     my $tmpl_data = {};

@@ -20,6 +20,7 @@ sub execute {
     my $url_archiver = Diversion::UrlArchiver->new;
     my $dbh = $url_archiver->dbh_index;
     my $rows = $dbh->selectall_arrayref('SELECT distinct uri,sha1_digest FROM uri_archive WHERE created_at > ?', {}, (time - $opt->{ago}));
+    $dbh->disconnect;
 
     my @harvested_links;
     for my $row (shuffle @$rows) {

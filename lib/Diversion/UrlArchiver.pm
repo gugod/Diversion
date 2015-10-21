@@ -12,22 +12,21 @@ package Diversion::UrlArchiver {
 
     my $JSON = JSON->new->canonical->pretty;
 
-    has dbh_index =>  (
-        is => "ro",
-        default => sub {
-            return DBI->connect(
-                "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/url_archive/index.sqlite3",
-                undef,
-                undef,
-                { AutoCommit => 1 }
-            );
-        }
-    );
+    sub dbh_index {
+        return DBI->connect(
+            "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/url_archive/index.sqlite3",
+            undef,
+            undef,
+            { AutoCommit => 1 }
+        );
+    }
 
     sub get_local {
         my ($self, $url) = @_;
         my $dbh = $self->dbh_index;
         my ($sha1_digest) = @{$dbh->selectcol_arrayref(q{ SELECT sha1_digest FROM uri_archive WHERE uri = ? ORDER BY created_at DESC LIMIT 1},{}, $url)};
+        $dbh->disconnect;
+
         return undef unless defined $sha1_digest;
         my $blob_store = $self->blob_store;
         if (my $response = $blob_store->get($sha1_digest)) {
@@ -54,6 +53,7 @@ package Diversion::UrlArchiver {
             my $sth_insert = $dbh->prepare(q{ INSERT INTO uri_archive(uri, created_at, sha1_digest) VALUES (?,?,?)});
             $sth_insert->execute($url, 0+time, $response_digest);
         }
+        $dbh->disconnect;
         return $response;        
     }
 

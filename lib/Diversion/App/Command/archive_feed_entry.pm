@@ -20,6 +20,8 @@ sub execute {
     my $feed_archiver = Diversion::FeedArchiver->new;
     my $dbh = $feed_archiver->dbh_index;
     my $rows = $dbh->selectall_arrayref('SELECT uri FROM feed_entries WHERE created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
+    $dbh->disconnect;
+
     my $o = Diversion::UrlArchiver->new;
     for my $row (shuffle @$rows) {
         unless ($o->get_local($row->{uri})) {
