@@ -6,6 +6,7 @@ use List::Util qw( shuffle );
 
 use Log::Any qw($log);
 use Mojo::DOM;
+use Parallel::ForkManager;
 
 use Diversion::UrlArchiver;
 
@@ -32,12 +33,16 @@ sub execute {
         }
 
         if (@harvested_links > 1000) {
+            my $forkman = Parallel::ForkManager->new(4);
             for my $u (shuffle @harvested_links) {
                 unless ($url_archiver->get_local($u)) {
+                    $forkman->start and next;
                     $url_archiver->get_remote($u);
-                    $log->info("HARVEST $u\n");
+                    $log->info("[$$] HARVEST $u\n");
+                    $forkman->finish;
                 }
             }
+            $forkman->wait_all_children;
             @harvested_links = ();
         }
     }
