@@ -52,6 +52,7 @@ package Diversion::UrlArchiver {
         unless ($sth_check->fetchrow_array) {
             my $sth_insert = $dbh->prepare(q{ INSERT INTO uri_archive(uri, created_at, sha1_digest) VALUES (?,?,?)});
             $sth_insert->execute($url, 0+time, $response_digest);
+            $sth_insert->finish;
         }
         $dbh->disconnect;
         return $response;        

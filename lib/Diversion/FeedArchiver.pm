@@ -50,7 +50,9 @@ package Diversion::FeedArchiver {
                 $sth_entry_insert->execute($entry->{link}, 0+time, $entry_json);
             }
         }
-
+        $sth_entry_insert->finish;
+        $sth_insert->finish;
+        $sth_check->finish;
         $dbh->disconnect;
     }
 };
