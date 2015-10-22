@@ -21,7 +21,7 @@ sub execute {
     }
 
     my $forkman = Parallel::ForkManager->new(4);
-    for (shuffle @feeds) {
+    for (shuffle grep { /^https?:/ } @feeds) {
         $forkman->start and next;
         my $feed_archiver = Diversion::FeedArchiver->new;
         say "[pid=$$] Processing $_";
