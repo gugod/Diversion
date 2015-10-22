@@ -20,7 +20,7 @@ sub execute {
     my ($self, $opt, $args) = @_;
     my $feed_archiver = Diversion::FeedArchiver->new;
     my $dbh = $feed_archiver->dbh_index;
-    my $rows = $dbh->selectall_arrayref('SELECT uri FROM feed_entries WHERE uri LIKE 'http%' created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
+    my $rows = $dbh->selectall_arrayref('SELECT uri FROM feed_entries WHERE uri LIKE "http%" AND created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
     $dbh->disconnect;
 
     my $forkman = Parallel::ForkManager->new(4);
