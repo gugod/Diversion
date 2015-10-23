@@ -19,13 +19,22 @@ sub opt_spec {
 sub execute {
     my ($self, $opt, $args) = @_;
     my $url_archiver = Diversion::UrlArchiver->new;
+
+    my $rows = [];
     my $dbh = $url_archiver->dbh_index;
-    my $rows = $dbh->selectall_arrayref('SELECT distinct uri,sha1_digest FROM uri_archive WHERE created_at > ?', {}, (time - $opt->{ago}));
+    if (@$args) {
+        for (@$args) {
+            push @$rows, @{ $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ? AND uri LIKE ?', {}, (time - $opt->{ago}), '%' . $_ . '%' ) };
+        }
+    } else {
+        $rows = $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ?', {}, (time - $opt->{ago}));
+    }
     $dbh->disconnect;
 
+    my $forkman = Parallel::ForkManager->new(4);
     my @harvested_links;
     for my $row (shuffle @$rows) {
-        my ($uri, $sha1_digest) = @$row[0,1];
+        my ($uri) = $row->[0];
         my $response = $url_archiver->get_local($uri);
         if ($response->{success}) {
             my $links = find_links($response);
@@ -33,7 +42,6 @@ sub execute {
         }
 
         if (@harvested_links > 1000) {
-            my $forkman = Parallel::ForkManager->new(4);
             for my $u (shuffle @harvested_links) {
                 unless ($url_archiver->get_local($u)) {
                     $forkman->start and next;
@@ -42,18 +50,20 @@ sub execute {
                     $forkman->finish;
                 }
             }
-            $forkman->wait_all_children;
             @harvested_links = ();
         }
     }
 
     for my $u (shuffle @harvested_links) {
         unless ($url_archiver->get_local($u)) {
+            $forkman->start and next;
             $url_archiver->get_remote($u);
             $log->info("HARVEST $u\n");
+            $forkman->finish;
         }
     }
     @harvested_links = ();
+    $forkman->wait_all_children;
 }
 
 sub find_links {
