@@ -54,6 +54,7 @@ package Diversion::UrlArchiver {
             $sth_insert->execute($url, 0+time, $response_digest);
             $sth_insert->finish;
         }
+        $sth_check->finish;
         $dbh->disconnect;
         return $response;        
     }
