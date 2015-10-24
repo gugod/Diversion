@@ -1,14 +1,14 @@
 package Diversion::UrlArchiver {
     use v5.18;
     use Moo;
+    with('Diversion::Db', 'Diversion::AppRole');
+
     use HTTP::Tiny;
     use Encode;
     use JSON;
     use DBI;
     use Digest::SHA1 'sha1_hex';
     use Data::Binary qw(is_binary);
-
-    with 'Diversion::AppRole';
 
     my $JSON = JSON->new->canonical->pretty;
 
@@ -23,11 +23,17 @@ package Diversion::UrlArchiver {
 
     sub get_local {
         my ($self, $url) = @_;
-        my $dbh = $self->dbh_index;
-        my ($sha1_digest) = @{$dbh->selectcol_arrayref(q{ SELECT sha1_digest FROM uri_archive WHERE uri = ? ORDER BY created_at DESC LIMIT 1},{}, $url)};
-        $dbh->disconnect;
 
+        my $sha1_digest = $self->db_open(
+            "url",
+            sub {
+                my ($dbh) = @_;
+                my ($v) = @{$dbh->selectcol_arrayref(q{ SELECT sha1_digest FROM uri_archive WHERE uri = ? ORDER BY created_at DESC LIMIT 1},{}, $url)};
+                return $v;
+            }
+        );
         return undef unless defined $sha1_digest;
+
         my $blob_store = $self->blob_store;
         if (my $response = $blob_store->get($sha1_digest)) {
             return $JSON->decode($response);
