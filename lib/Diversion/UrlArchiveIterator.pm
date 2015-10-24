@@ -21,12 +21,13 @@ has reified => (
 sub reify {
     my ($self) = @_;
     my $o = Diversion::UrlArchiver->new;
-    my $ext_cursor = $self->_has_ext_cursor ? $self->_ext_cursor : "";
+    my $ext_cursor = $self->_has_ext_cursor ? $self->_ext_cursor : 0;
     my $dbh = $o->dbh_index;
-    my $rows = $dbh->selectcol_arrayref("SELECT distinct uri FROM uri_archive WHERE uri > ? ORDER BY uri ASC", {}, $ext_cursor);
+    my $rows = $dbh->selectall_arrayref("SELECT uri,sha1_digest,created_at FROM uri_archive ORDER BY uri ASC LIMIT ?,1000", {Slice=>{}}, $ext_cursor);
     $dbh->disconnect;
+
     $self->reified($rows);
-    $self->_ext_cursor( $rows->[-1] );
+    $self->_ext_cursor( $ext_cursor + @$rows );
     $self->_cursor( 0 );
     return $self;
 }

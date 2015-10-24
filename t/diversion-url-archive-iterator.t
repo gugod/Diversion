@@ -4,6 +4,6 @@ use Diversion::UrlArchiveIterator;
 
 my $iter = Diversion::UrlArchiveIterator->new();
 
-while (my $url = $iter->next()) {
-    say $url;
+while (my $row = $iter->next()) {
+    say $row->{uri};
 }
