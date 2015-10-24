@@ -1,6 +1,8 @@
 package Diversion::App::Command::harvest_links;
 use v5.18;
 use Diversion::App -command;
+use Moo;
+with 'Diversion::Db';
 
 use List::Util qw( shuffle );
 use List::MoreUtils qw( uniq );
@@ -40,15 +42,19 @@ sub execute {
     my $url_archiver = Diversion::UrlArchiver->new;
 
     my $rows = [];
-    my $dbh = $url_archiver->dbh_index;
-    if (@$args) {
-        for (@$args) {
-            push @$rows, @{ $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ? AND uri LIKE ?', {}, (time - $opt->{ago}), '%' . $_ . '%' ) };
+    $self->db_open(
+        url => sub {
+            my ($dbh) = @_;
+            if (@$args) {
+                for (@$args) {
+                    push @$rows, @{ $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ? AND uri LIKE ?', {}, (time - $opt->{ago}), '%' . $_ . '%' ) };
+                }
+            } else {
+                $rows = $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ?', {}, (time - $opt->{ago}));
+            }
+            return;
         }
-    } else {
-        $rows = $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ?', {}, (time - $opt->{ago}));
-    }
-    $dbh->disconnect;
+    );
 
     my $forkman = Parallel::ForkManager->new(4);
     my @links;

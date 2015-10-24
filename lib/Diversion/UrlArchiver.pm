@@ -12,15 +12,6 @@ package Diversion::UrlArchiver {
 
     my $JSON = JSON->new->canonical->pretty;
 
-    sub dbh_index {
-        return DBI->connect(
-            "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/url_archive/index.sqlite3",
-            undef,
-            undef,
-            { AutoCommit => 1 }
-        );
-    }
-
     sub get_local {
         my ($self, $url) = @_;
 

@@ -2,6 +2,9 @@ package Diversion::App::Command::archive_feed_entry;
 use v5.18;
 use Diversion::App -command;
 
+use Moo;
+with 'Diversion::Db';
+
 use List::Util qw( shuffle );
 
 use Log::Any qw($log);
@@ -18,10 +21,13 @@ sub opt_spec {
 
 sub execute {
     my ($self, $opt, $args) = @_;
-    my $feed_archiver = Diversion::FeedArchiver->new;
-    my $dbh = $feed_archiver->dbh_index;
-    my $rows = $dbh->selectall_arrayref('SELECT uri FROM feed_entries WHERE uri LIKE "http%" AND created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
-    $dbh->disconnect;
+
+    my $rows = $self->db_open(
+        feed => sub {
+            my ($dbh) = @_;
+            return $dbh->selectall_arrayref('SELECT uri FROM feed_entries WHERE uri LIKE "http%" AND created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
+        }
+    );
 
     my $forkman = Parallel::ForkManager->new(4);
     my $o = Diversion::UrlArchiver->new;

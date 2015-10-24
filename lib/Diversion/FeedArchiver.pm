@@ -21,15 +21,6 @@ package Diversion::FeedArchiver {
     use Diversion::ContentExtractor;
     use Diversion::UrlArchiver;
 
-    sub dbh_index {
-        return DBI->connect(
-            "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/feed_archive/index.sqlite3",
-            undef,
-            undef,
-            { AutoCommit => 1 }
-        );
-    }
-
     sub fetch_then_archive {
         my ($self, $url) = @_;
 

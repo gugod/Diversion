@@ -1,6 +1,8 @@
 package Diversion::UrlArchiveIterator;
 use v5.18;
 use Moo;
+with 'Diversion::Db';
+
 use Diversion::UrlArchiver;
 
 has _ext_cursor => (
@@ -22,9 +24,13 @@ sub reify {
     my ($self) = @_;
     my $o = Diversion::UrlArchiver->new;
     my $ext_cursor = $self->_has_ext_cursor ? $self->_ext_cursor : 0;
-    my $dbh = $o->dbh_index;
-    my $rows = $dbh->selectall_arrayref("SELECT uri,sha1_digest,created_at FROM uri_archive ORDER BY uri ASC LIMIT ?,1000", {Slice=>{}}, $ext_cursor);
-    $dbh->disconnect;
+
+    my $rows = $self->db_open(
+        url => sub {
+            my ($dbh) = @_;
+            $dbh->selectall_arrayref("SELECT uri,sha1_digest,created_at FROM uri_archive ORDER BY uri ASC LIMIT ?,1000", {Slice=>{}}, $ext_cursor);
+        }
+    );
 
     $self->reified($rows);
     $self->_ext_cursor( $ext_cursor + @$rows );

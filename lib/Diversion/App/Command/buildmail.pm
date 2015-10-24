@@ -24,12 +24,14 @@ sub execute {
     my ($self, $opt, $args) = @_;
 
     my $feed_archiver = Diversion::FeedArchiver->new;
-
-    my $dbh = $feed_archiver->dbh_index;
     my $blob_store = $feed_archiver->blob_store;
 
-    my $rows = $dbh->selectall_arrayref('SELECT uri, created_at, entry_json FROM feed_entries WHERE created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
-    $dbh->disconnect;
+    my $rows = $self->db_open(
+        feed => sub {
+            my ($dbh) = @_;
+            $dbh->selectall_arrayref('SELECT uri, created_at, entry_json FROM feed_entries WHERE created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
+        }
+    );
 
     my $JSON = JSON::PP->new->utf8;
     my $tmpl_data = {};
