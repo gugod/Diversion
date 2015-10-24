@@ -78,16 +78,17 @@ sub execute {
 
 sub find_links {
     my ($response) = @_;
-    return [] unless ( $response->{headers}{"content-type"} =~ m{^ text/html }x );
+    return [] unless ( ($response->{headers}{"content-type"} //"") =~ m{^ text/html }x );
 
     my $links = [];
 
     my $dom = Mojo::DOM->new($response->{content});
-    @$links = $dom->find("a[href^=http]")->map(
+    @$links = $dom->find("a[href^='http']")->grep(
         sub {
-            $_->attr("href");
+            my $v = $_->attr("href");
+            return (defined($v) && $v =~ /\Ahttp/)
         }
-    )->uniq->each;
+    )->map(sub { $_->attr("href") })->uniq->each;
 
     return $links;
 }
