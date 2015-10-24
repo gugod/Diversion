@@ -11,14 +11,9 @@ use Parallel::ForkManager;
 sub execute {
     my ($self, $opt, $args) = @_;
 
-    my $feed_url = $args->[0] or die "Missing URL in arg";
+    my $feed_list_file = $args->[0] or die "Missing a filename in ard";
 
-    my @feeds;
-    if (-f $feed_url) {
-        @feeds = grep { s/\s//g; $_ } io($feed_url)->chomp->getlines;
-    } else {
-        push @feeds, $feed_url;
-    }
+    my @feeds = io($feed_list_file)->chomp->getlines;
 
     my $forkman = Parallel::ForkManager->new(4);
     for (shuffle grep { /^https?:/ } @feeds) {
