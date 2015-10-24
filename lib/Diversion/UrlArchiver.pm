@@ -52,17 +52,22 @@ package Diversion::UrlArchiver {
         }
         my $response_digest = $blob_store->put("". $JSON->encode($response));
 
-        my $dbh = $self->dbh_index;
-        my $sth_check = $dbh->prepare(q{ SELECT 1 FROM uri_archive WHERE uri = ? AND sha1_digest = ? LIMIT 1});
-        $sth_check->execute($url, $response_digest);
-        unless ($sth_check->fetchrow_array) {
-            my $sth_insert = $dbh->prepare(q{ INSERT INTO uri_archive(uri, created_at, sha1_digest) VALUES (?,?,?)});
-            $sth_insert->execute($url, 0+time, $response_digest);
-            $sth_insert->finish;
-        }
-        $sth_check->finish;
-        $dbh->disconnect;
-        return $response;        
+        $self->db_open(
+            "url",
+            sub {
+                my ($dbh) = @_;
+                my $sth_check = $dbh->prepare(q{ SELECT 1 FROM uri_archive WHERE uri = ? AND sha1_digest = ? LIMIT 1});
+                $sth_check->execute($url, $response_digest);
+                unless ($sth_check->fetchrow_array) {
+                    my $sth_insert = $dbh->prepare(q{ INSERT INTO uri_archive(uri, created_at, sha1_digest) VALUES (?,?,?)});
+                    $sth_insert->execute($url, 0+time, $response_digest);
+                    $sth_insert->finish;
+                }
+                $sth_check->finish;
+            }
+        );
+
+        return $response;
     }
 
     sub get {
