@@ -22,10 +22,15 @@ sub opt_spec {
 sub harvest_these_links {
     my ($forkman, $url_archiver, $links, $substr_constraint) = @_;
 
-    my @todo = shuffle uniq grep {
-        my $u = $_;
-        (grep { index($u, $_) > 0 } @$substr_constraint) > 0;
-    } @$links;
+    my @todo;
+    if (defined($substr_constraint) && @$substr_constraint) {
+        @todo = shuffle uniq grep {
+            my $u = $_;
+            (grep { index($u, $_) >= 0 } @$substr_constraint) > 0;
+        } @$links;
+    } else {
+        @todo = shuffle uniq @$links;
+    }
 
     for my $u (@todo) {
         next if $url_archiver->get_local($u);
