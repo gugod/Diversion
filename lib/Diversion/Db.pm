@@ -4,11 +4,11 @@ use DBI;
 
 use constant db_config => {
     feed => [
-        "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/feed_archive/index.sqlite3",
+        "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/db/feed.sqlite3",
         undef, undef, { AutoCommit => 1 }
     ],
     url => [
-        "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/url_archive/index.sqlite3",
+        "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/db/url.sqlite3",
         undef, undef, { AutoCommit => 1 }
     ]
 };
