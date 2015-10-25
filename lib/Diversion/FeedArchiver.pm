@@ -30,24 +30,18 @@ package Diversion::FeedArchiver {
             "feed",
             sub {
                 my ($dbh) = @_;
-                my $sth_insert = $dbh->prepare(q{ INSERT INTO feed_archive(uri, created_at, sha1_digest) VALUES (?,?,?)});
-                my $sth_check = $dbh->prepare(q{ SELECT 1 FROM feed_archive WHERE uri = ? AND sha1_digest = ? LIMIT 1});
-                my $sth_entry_insert = $dbh->prepare(q{ INSERT INTO feed_entries(uri, created_at, entry_json) VALUES (?,?,?)});
 
                 my $feed = Diversion::FeedFetcher->new(url => $url)->feed;
                 my $digest = $self->blob_store->put( "". $JSON->encode( $feed ) );
 
-                $sth_check->execute($url, $digest);
-                unless ($sth_check->fetchrow_array) {
-                    $sth_insert->execute($url, 0+time, $digest);
-                    for my $entry (@{ $feed->{entry} }) {
-                        my $entry_json = $JSON->encode($entry);
-                        $sth_entry_insert->execute($entry->{link}, 0+time, $entry_json);
-                    }
+                my ($exists) = @{ $dbh->selectcol_arrayref(q{ SELECT 1 FROM feed_archive WHERE uri = ? AND sha1_digest = ? LIMIT 1}) };
+                return if $exists;
+
+                $dbh->do(q{ INSERT INTO feed_archive(uri, created_at, sha1_digest) VALUES (?,?,?)}, {}, $url, 0+time, $digest);
+                for my $entry (@{ $feed->{entry} }) {
+                    my $entry_json = $JSON->encode($entry);
+                    $dbh->do(q{ INSERT OR IGNORE INTO feed_entries(uri, created_at, entry_json) VALUES (?,?,?) }, {}, $entry->{link}, 0+time, $entry_json);
                 }
-                $sth_entry_insert->finish;
-                $sth_insert->finish;
-                $sth_check->finish;
             }
         );
     }
