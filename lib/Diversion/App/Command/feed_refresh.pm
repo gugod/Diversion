@@ -44,15 +44,11 @@ sub find_feeds {
     while (my $row = $iter->next) {
         my $blob = $self->blob_store->get($row->{sha1_digest});
         my $res = $JSON->decode( $blob );
-
         next unless $row->{uri} =~ /^https?:/ && defined($res->{headers}{"content-type"}) && $res->{headers}{"content-type"} =~ /atom|rss/;
         if ($last ne $row->{uri}) {
-            $last = $row->{uri};
-            push @$feeds, $last;
-            say $last;
+            push(@$feeds, $last = $row->{uri});
         }
     }
-    push @$feeds, $last;
     @$feeds = uniq(@$feeds);
     return $feeds;
 }
