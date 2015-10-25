@@ -8,6 +8,7 @@ use List::Util qw( shuffle );
 use List::MoreUtils qw( uniq );
 
 use Log::Any qw($log);
+use URI;
 use Mojo::DOM;
 use Parallel::ForkManager;
 
@@ -67,7 +68,7 @@ sub execute {
         my ($uri) = $row->[0];
         my $response = $url_archiver->get_local($uri);
         if ($response->{success}) {
-            push @links, @{ find_links($response) };
+            push @links, @{ find_links($response, $uri) };
         }
 
         if (@links > 1000) {
@@ -82,18 +83,28 @@ sub execute {
 }
 
 sub find_links {
-    my ($response) = @_;
+    my ($response, $uri) = @_;
     return [] unless ( ($response->{headers}{"content-type"} //"") =~ m{^ text/html }x );
 
     my $links = [];
 
+    my $base_uri = URI->new($uri);
     my $dom = Mojo::DOM->new($response->{content});
-    @$links = $dom->find("a[href^='http']")->grep(
+    @$links = $dom->find("a[href]")->grep(
         sub {
             my $v = $_->attr("href");
-            return (defined($v) && $v =~ /\Ahttp/)
+            return defined($v);
         }
-    )->map(sub { $_->attr("href") })->uniq->each;
+    )->map(
+        sub {
+            my $v = $_->attr("href");
+            return URI->new_abs($v, $base_uri);
+        }
+    )->grep(
+        sub {
+            $_->scheme =~ /\A https? \z/x;
+        }
+    )->map(sub { "$_" })->uniq->each;
 
     return $links;
 }
