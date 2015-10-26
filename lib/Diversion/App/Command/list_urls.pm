@@ -1,4 +1,4 @@
-package Diversion::App::Command::cat_url_archive;
+package Diversion::App::Command::list_urls;
 use v5.18;
 use Moo;
 with 'Diversion::AppRole';
