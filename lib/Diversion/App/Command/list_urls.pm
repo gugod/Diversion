@@ -9,24 +9,28 @@ use JSON::XS;
 
 sub opt_spec {
     return (
-        ["content-type=s", "Only the content-type"]
+        ["content-type=s", "Only the content-type"],
+        ["only-binary", "Only binary"],
     )
 }
 
 sub execute {
     my ($self, $opt) = @_;
     my $JSON = JSON::XS->new;
+    my $should_load_res = keys %$opt > 0;
     my $last = "";
     my $iter = Diversion::UrlArchiveIterator->new();
     while (my $row = $iter->next) {
-        if ($opt->{content_type}) {
+        my $res;
+        if ($should_load_res) {
             my $blob = $self->blob_store->get($row->{sha1_digest});
-            my $res = $JSON->decode( $blob );
-            next unless defined($res->{headers}{"content-type"}) && index($res->{headers}{"content-type"}, $opt->{content_type}) > 0;
+            $res = $JSON->decode( $blob );            
         }
-        if ($last ne $row->{uri}) {
-            say $last = $row->{uri};
-        }
+
+        next if $opt->{content_type} && defined($res->{headers}{"content-type"}) && index($res->{headers}{"content-type"}, $opt->{content_type}) < 0;
+        next if $opt->{only_binary} && !ref($res->{content});
+
+        say($last = $row->{uri}) if $last ne $row->{uri};
     }
 }
 
