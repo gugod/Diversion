@@ -1,7 +1,7 @@
 package Diversion::App::Command::list_urls;
 use v5.18;
 use Moo;
-with 'Diversion::AppRole';
+with 'Diversion::AppRole', 'Diversion::Db';
 use Diversion::App -command;
 
 use Diversion::UrlArchiveIterator;
@@ -24,13 +24,22 @@ sub execute {
         my $res;
         if ($should_load_res) {
             my $blob = $self->blob_store->get($row->{sha1_digest});
-            $res = $JSON->decode( $blob );            
+            $res = $JSON->decode( $blob ) if $blob;
         }
 
         next if $opt->{content_type} && defined($res->{headers}{"content-type"}) && index($res->{headers}{"content-type"}, $opt->{content_type}) < 0;
         next if $opt->{only_binary} && !ref($res->{content});
 
-        say($last = $row->{uri}) if $last ne $row->{uri};
+        if ($last ne $row->{uri}) {
+            say($last = $row->{uri});
+            $self->blob_store->delete($row->{sha1_digest});
+            $self->db_open(
+                url => sub {
+                    my ($dbh) = @_;
+                    $dbh->do("DELETE FROM uri_archive WHERE sha1_digest = ?", {}, $row->{sha1_digest});
+                }
+            );
+        }
     }
 }
 
