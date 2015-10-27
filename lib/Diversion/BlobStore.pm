@@ -1,6 +1,7 @@
 package Diversion::BlobStore;
 use Moo;
 use Digest::SHA1 qw(sha1_hex);
+use File::Next;
 use File::Spec;
 use File::Path qw(make_path);
 use PerlIO::via::gzip;
@@ -79,6 +80,16 @@ sub delete {
         unlink($f);
     }
     return undef;
+}
+
+sub each {
+    my ($self, $cb) = @_;
+    my $files = File::Next::files( $self->root );
+    my $prefix_length = length($self->root);
+    while ( defined ( my $file = $files->() ) ) {
+        my $digest = substr($file, $prefix_length, 4) . substr($file, $prefix_length + 5);
+        $cb->($digest);
+    }
 }
 
 1;
