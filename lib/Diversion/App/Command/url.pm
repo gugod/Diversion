@@ -1,4 +1,4 @@
-package Diversion::App::Command::list_urls;
+package Diversion::App::Command::url;
 use v5.18;
 use Moo;
 with 'Diversion::AppRole', 'Diversion::Db';
