@@ -8,6 +8,7 @@ use Diversion::App -command;
 sub opt_spec {
     return (
         ["orphan", "List blob id that are not referenced anywhere"],
+        ["delete", "Delete the blob"],
     )
 }
 
@@ -29,7 +30,12 @@ sub execute {
                                 my ($digest) = @_;
                                 my $x = $dbh_url->selectcol_arrayref(q{ SELECT 1 from uri_archive WHERE sha1_digest = ? LIMIT 1}, {}, $digest);
                                 my $y = $dbh_feed->selectcol_arrayref(q{ SELECT 1 from feed_archive WHERE sha1_digest = ? LIMIT 1}, {}, $digest);
-                                say $digest unless $x->[0] || $y->[0];
+                                unless ( $x->[0] || $y->[0]) {
+                                    say $digest;
+                                    if ($opt->{delete}) {
+                                        $self->blob_store->delete($digest);
+                                    }
+                                }
                             }
                         );
                     }
