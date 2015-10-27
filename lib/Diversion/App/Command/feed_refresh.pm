@@ -43,6 +43,10 @@ sub find_feeds {
     my $iter = Diversion::UrlArchiveIterator->new();
     while (my $row = $iter->next) {
         my $blob = $self->blob_store->get($row->{sha1_digest});
+        unless (defined($blob)) {
+            warn "Blob is missing: $row->{sha1_digest} $row->{uri}";
+            next;
+        }
         my $res = $JSON->decode( $blob );
         next unless $row->{uri} =~ /^https?:/ && defined($res->{headers}{"content-type"}) && $res->{headers}{"content-type"} =~ /atom|rss/;
         if ($last ne $row->{uri}) {
