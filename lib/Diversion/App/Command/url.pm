@@ -32,13 +32,15 @@ sub execute {
 
         if ($last ne $row->{uri}) {
             say($last = $row->{uri});
-            $self->blob_store->delete($row->{sha1_digest});
-            $self->db_open(
-                url => sub {
-                    my ($dbh) = @_;
-                    $dbh->do("DELETE FROM uri_archive WHERE sha1_digest = ?", {}, $row->{sha1_digest});
-                }
-            );
+            if ($opt->{delete}) {
+                $self->blob_store->delete($row->{sha1_digest});
+                $self->db_open(
+                    url => sub {
+                        my ($dbh) = @_;
+                        $dbh->do("DELETE FROM uri_archive WHERE sha1_digest = ?", {}, $row->{sha1_digest});
+                    }
+                );
+            }
         }
     }
 }
