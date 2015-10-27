@@ -68,4 +68,17 @@ sub get {
     return undef;
 }
 
+sub delete {
+    my ($self, $digest) = @_;
+    my $f = $self->_filename($digest);
+    my $f_gz = $f . ".gz";
+    if (-f $f_gz) {
+        unlink($f_gz);
+    }
+    if (-f $f) {
+        unlink($f);
+    }
+    return undef;
+}
+
 1;
