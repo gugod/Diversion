@@ -1,4 +1,4 @@
-package Diversion::App::Command::archive_url;
+package Diversion::App::Command::url_archive;
 use v5.18;
 use Diversion::App -command;
 use Diversion::UrlArchiver;
