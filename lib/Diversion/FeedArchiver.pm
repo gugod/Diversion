@@ -17,7 +17,6 @@ package Diversion::FeedArchiver {
     use JSON;
 
     use Diversion::FeedFetcher;
-    use Diversion::UrlFetcher;
     use Diversion::ContentExtractor;
     use Diversion::UrlArchiver;
 
