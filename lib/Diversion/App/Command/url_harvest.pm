@@ -1,4 +1,4 @@
-package Diversion::App::Command::harvest_links;
+package Diversion::App::Command::url_harvest;
 use v5.18;
 use Diversion::App -command;
 use Moo;
