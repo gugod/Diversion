@@ -23,7 +23,8 @@ sub opt_spec {
 sub harvest_these_links {
     my ($url_archiver, $links) = @_;
 
-    for my $u (shuffle @$links) {
+    $links = order_by_round_robin_host($links);
+    for my $u (@$links) {
         next if $url_archiver->get_local($u);
         $0 = "$0 - $u";
         $url_archiver->get_remote($u);
@@ -50,18 +51,20 @@ sub execute {
         }
     );
 
+    @$rows = map { $_->[0] } @$rows;
+    $rows = order_by_round_robin_host($rows);
+
     my $forkman = Parallel::ForkManager->new(4);
     my @links;
-    for my $row (shuffle @$rows)  {
-        my ($uri) = $row->[0];
+    for my $uri (@$rows)  {
         my $response = $url_archiver->get_local($uri);
         if ($response->{success}) {
             push @links, @{ find_links($response, $uri, $args) };
         }
-
+        @links = uniq(@links);
         if (@links > 1000) {
             $forkman->start and next;
-            harvest_these_links($url_archiver, \@links);
+            harvest_these_links($url_archiver, order_by_round_robin_host(\@links));
             $forkman->finish;
             @links = ();
         }
@@ -69,7 +72,7 @@ sub execute {
 
     if (@links) {
         unless ($forkman->start) {
-            harvest_these_links($url_archiver, \@links);
+            harvest_these_links($url_archiver, order_by_round_robin_host(\@links));
             $forkman->finish;
         }
         @links = ();
@@ -110,6 +113,29 @@ sub find_links {
     }
 
     return $links;
+}
+
+sub order_by_round_robin_host {
+    my ($uris) = @_;
+    my $ret = [];
+    my %buckets;
+    for (@$uris) {
+        my ($host) = $_ =~ m{\A https?:///? ([^/]+) (?: /|$ )}x;
+        if ($host) {
+            push @{ $buckets{$host} }, $_;
+        } else {
+            say STDERR "Unknown protocal: $_";
+        }
+    }
+    my @hosts = keys %buckets;
+    while (keys %buckets > 0) {
+        for my $host (@hosts) {
+            next unless exists($buckets{$host});
+            push(@$ret, pop(@{$buckets{$host}}));
+            delete $buckets{$host} unless @{$buckets{$host}};
+        }
+    }
+    return $ret;
 }
 
 1;
