@@ -59,10 +59,13 @@ sub execute {
     for my $uri (@$rows)  {
         my $response = $url_archiver->get_local($uri);
         if ($response->{success}) {
-            push @links, @{ find_links($response, $uri, $args) };
+            push @links, grep { ! $url_archiver->get_local($_) } @{find_links($response, $uri, $args)};
         }
-        @links = uniq(@links);
-        if (@links > 1000) {
+
+        if (@links > 99999) {
+            @links = uniq(@links);
+        }
+        if (@links > 99999) {
             $forkman->start and next;
             harvest_these_links($url_archiver, order_by_round_robin_host(\@links));
             $forkman->finish;
