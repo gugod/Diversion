@@ -91,12 +91,12 @@ sub find_links {
 
     my $x = $dom->find("a[href]")->grep(
         sub {
-            my $v = $_->attr("href");
-            return defined($v);
+            return defined( $_->attr("href") );
         }
     )->map(
         sub {
             my $v = $_->attr("href");
+            $v =~ s/#.*$//;
             return URI->new_abs($v, $base_uri);
         }
     )->grep(
