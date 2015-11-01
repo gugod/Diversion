@@ -41,7 +41,7 @@ sub execute {
             my ($dbh) = @_;
             if (@$args) {
                 for (@$args) {
-                    push @$rows, @{ $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ? AND uri LIKE ? ORDER BY created_at DESC', {}, (time - $opt->{ago}), '%' . $_ . '%' ) };
+                    push @$rows, @{ $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ? AND instr(uri,?) ORDER BY created_at DESC', {}, (time - $opt->{ago}), $_) };
                 }
             } else {
                 $rows = $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ? ORDER BY created_at DESC', {}, (time - $opt->{ago}));
