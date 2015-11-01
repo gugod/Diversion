@@ -61,7 +61,7 @@ sub execute {
             push @links, grep { ! $url_archiver->get_local($_) } @{find_links($response, $uri, $args)};
         }
 
-        if (@links > 9999) {
+        if (@links > 99) {
             $forkman->start and next;
             @links = uniq(@links);
             harvest_these_links($url_archiver, order_by_round_robin_host(\@links));
