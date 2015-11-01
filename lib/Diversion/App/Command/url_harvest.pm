@@ -21,25 +21,13 @@ sub opt_spec {
 }
 
 sub harvest_these_links {
-    my ($forkman, $url_archiver, $links, $substr_constraint) = @_;
+    my ($url_archiver, $links) = @_;
 
-    my @todo;
-    if (defined($substr_constraint) && @$substr_constraint) {
-        @todo = shuffle uniq grep {
-            my $u = $_;
-            (grep { index($u, $_) >= 0 } @$substr_constraint) > 0;
-        } @$links;
-    } else {
-        @todo = shuffle uniq @$links;
-    }
-
-    for my $u (@todo) {
+    for my $u (shuffle @$links) {
         next if $url_archiver->get_local($u);
-        $forkman->start and next;
         $0 = "$0 - $u";
         $url_archiver->get_remote($u);
         $log->info("[$$] HARVEST $u\n");
-        $forkman->finish;
     }
 }
 
@@ -64,26 +52,34 @@ sub execute {
 
     my $forkman = Parallel::ForkManager->new(4);
     my @links;
-    for my $row (shuffle @$rows) {
+    for my $row (shuffle @$rows)  {
         my ($uri) = $row->[0];
         my $response = $url_archiver->get_local($uri);
         if ($response->{success}) {
-            push @links, @{ find_links($response, $uri) };
+            push @links, @{ find_links($response, $uri, $args) };
         }
 
         if (@links > 1000) {
-            harvest_these_links($forkman, $url_archiver, \@links, $args);
+            $forkman->start and next;
+            harvest_these_links($url_archiver, \@links);
+            $forkman->finish;
             @links = ();
         }
     }
 
-    harvest_these_links($forkman, $url_archiver, \@links, $args);
-    @links = ();
+    if (@links) {
+        unless ($forkman->start) {
+            harvest_these_links($url_archiver, \@links);
+            $forkman->finish;
+        }
+        @links = ();
+    }
+
     $forkman->wait_all_children;
 }
 
 sub find_links {
-    my ($response, $uri) = @_;
+    my ($response, $uri, $substr_constraint) = @_;
     return [] unless ( ($response->{headers}{"content-type"} //"") =~ m{^ text/html }x );
 
     my $links = [];
@@ -105,6 +101,13 @@ sub find_links {
             $_->scheme =~ /\A https? \z/x;
         }
     )->map(sub { "$_" })->uniq->each;
+
+    if (defined($substr_constraint) && @$substr_constraint) {
+        @$links = grep {
+            my $u = $_;
+            (grep { index($u, $_) >= 0 } @$substr_constraint) > 0;
+        } @$links;
+    }
 
     return $links;
 }
