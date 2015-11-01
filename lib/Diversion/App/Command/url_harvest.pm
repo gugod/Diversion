@@ -23,8 +23,9 @@ sub harvest_these_links {
     my ($url_archiver, $links) = @_;
 
     $links = order_by_round_robin_host($links);
+    my $orig0 = $0;
     for my $u (@$links) {
-        $0 = "$0 - $u";
+        $0 = "diversion url_harvest - $u";
         $url_archiver->get_remote($u);
         $log->info("[$$] HARVEST $u\n");
     }
