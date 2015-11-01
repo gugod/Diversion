@@ -61,10 +61,8 @@ sub execute {
         }
 
         if (@links > 9999) {
-            @links = uniq(@links);
-        }
-        if (@links > 9999) {
             $forkman->start and next;
+            @links = uniq(@links);
             harvest_these_links($url_archiver, order_by_round_robin_host(\@links));
             $forkman->finish;
             @links = ();
@@ -90,7 +88,8 @@ sub find_links {
 
     my $base_uri = URI->new($uri);
     my $dom = Mojo::DOM->new($response->{content});
-    @$links = $dom->find("a[href]")->grep(
+
+    my $x = $dom->find("a[href]")->grep(
         sub {
             my $v = $_->attr("href");
             return defined($v);
@@ -104,15 +103,18 @@ sub find_links {
         sub {
             $_->scheme =~ /\A https? \z/x;
         }
-    )->map(sub { "$_" })->uniq->each;
+    );
 
     if (defined($substr_constraint) && @$substr_constraint) {
-        @$links = grep {
-            my $u = $_;
-            (grep { index($u, $_) >= 0 } @$substr_constraint) > 0;
-        } @$links;
+        $x = $x->grep(
+            sub {
+                my $uri = $_;
+                (grep { index($uri->host, $_) >= 0 } @$substr_constraint) > 0;
+            }
+        );
     }
 
+    @$links = $x->map(sub { "$_" })->uniq->each;
     return $links;
 }
 
