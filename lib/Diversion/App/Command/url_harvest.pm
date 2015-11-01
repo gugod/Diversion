@@ -51,7 +51,6 @@ sub execute {
     );
 
     @$rows = map { $_->[0] } @$rows;
-    $rows = order_by_round_robin_host($rows);
 
     my $forkman = Parallel::ForkManager->new(4);
     my @links;
