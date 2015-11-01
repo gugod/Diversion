@@ -4,7 +4,6 @@ use Diversion::App -command;
 use Moo;
 with 'Diversion::Db';
 
-use List::Util qw( shuffle );
 use List::MoreUtils qw( uniq );
 
 use Log::Any qw($log);
@@ -41,10 +40,10 @@ sub execute {
             my ($dbh) = @_;
             if (@$args) {
                 for (@$args) {
-                    push @$rows, @{ $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ? AND uri LIKE ?', {}, (time - $opt->{ago}), '%' . $_ . '%' ) };
+                    push @$rows, @{ $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ? AND uri LIKE ? ORDER BY created_at DESC', {}, (time - $opt->{ago}), '%' . $_ . '%' ) };
                 }
             } else {
-                $rows = $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ?', {}, (time - $opt->{ago}));
+                $rows = $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ? ORDER BY created_at DESC', {}, (time - $opt->{ago}));
             }
             return;
         }
@@ -61,10 +60,10 @@ sub execute {
             push @links, grep { ! $url_archiver->get_local($_) } @{find_links($response, $uri, $args)};
         }
 
-        if (@links > 99999) {
+        if (@links > 9999) {
             @links = uniq(@links);
         }
-        if (@links > 99999) {
+        if (@links > 9999) {
             $forkman->start and next;
             harvest_these_links($url_archiver, order_by_round_robin_host(\@links));
             $forkman->finish;
