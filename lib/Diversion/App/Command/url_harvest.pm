@@ -4,6 +4,7 @@ use Diversion::App -command;
 use Moo;
 with 'Diversion::Db';
 
+use List::Util qw(shuffle);
 use List::MoreUtils qw( uniq );
 
 use Log::Any qw($log);
@@ -54,17 +55,16 @@ sub execute {
     );
 
     @$rows = map { $_->[0] } @$rows;
-    $rows = order_by_round_robin_host($rows);
 
     my $forkman = Parallel::ForkManager->new(4);
     my @links;
-    for my $uri (@$rows)  {
+    for my $uri (shuffle @$rows)  {
         my $response = $url_archiver->get_local($uri);
         if ($response->{success}) {
             push @links, grep { ! $url_archiver->get_local($_) } @{find_links($response, $uri, $args)};
         }
 
-        if (@links > 99) {
+        if (@links > 999) {
             @links = uniq(@links);
             harvest_these_links($forkman, $url_archiver, order_by_round_robin_host(\@links));
             @links = ();
