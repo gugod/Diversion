@@ -25,7 +25,6 @@ sub harvest_these_links {
 
     $links = order_by_round_robin_host($links);
     for my $u (@$links) {
-        next if $url_archiver->get_local($u);
         $0 = "$0 - $u";
         $url_archiver->get_remote($u);
         $log->info("[$$] HARVEST $u\n");
