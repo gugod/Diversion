@@ -39,7 +39,7 @@ sub reify {
         url => sub {
             my ($dbh) = @_;
             my $SELECT_CLAUSE = "SELECT uri,sha1_digest,created_at FROM uri_archive";
-            my $ORDER_CLAUSE = "ORDER BY uri ASC";
+            my $ORDER_CLAUSE = "ORDER BY created_at DESC";
 
             if ($self->has_sql_order_clause) {
                 $ORDER_CLAUSE = "ORDER BY " . $self->sql_order_clause;
@@ -47,9 +47,9 @@ sub reify {
 
             if ($self->has_sql_where_clause) {
                 my ($WHERE_CLAUSE, @values) = @{$self->sql_where_clause};
-                $dbh->selectall_arrayref("$SELECT_CLAUSE WHERE $WHERE_CLAUSE $ORDER_CLAUSE LIMIT ?,1000", {Slice=>{}}, @values, $ext_cursor);
+                return $dbh->selectall_arrayref("$SELECT_CLAUSE WHERE $WHERE_CLAUSE $ORDER_CLAUSE LIMIT ?,1000", {Slice=>{}}, @values, $ext_cursor);
             } else {
-                $dbh->selectall_arrayref("$SELECT_CLAUSE $ORDER_CLAUSE LIMIT ?,1000", {Slice=>{}}, $ext_cursor);
+                return $dbh->selectall_arrayref("$SELECT_CLAUSE $ORDER_CLAUSE LIMIT ?,1000", {Slice=>{}}, $ext_cursor);
             }
         }
     );

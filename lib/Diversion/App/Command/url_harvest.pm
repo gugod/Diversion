@@ -13,6 +13,7 @@ use Mojo::DOM;
 use Parallel::ForkManager;
 
 use Diversion::UrlArchiver;
+use Diversion::UrlArchiveIterator;
 
 sub opt_spec {
     return (
@@ -37,28 +38,28 @@ sub harvest_these_links {
 
 sub execute {
     my ($self, $opt, $args) = @_;
+
     my $url_archiver = Diversion::UrlArchiver->new;
 
     my $rows = [];
-    $self->db_open(
-        url => sub {
-            my ($dbh) = @_;
-            if (@$args) {
-                for (@$args) {
-                    push @$rows, @{ $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ? AND instr(uri,?) ORDER BY created_at DESC', {}, (time - $opt->{ago}), $_) };
-                }
-            } else {
-                $rows = $dbh->selectall_arrayref('SELECT distinct uri FROM uri_archive WHERE created_at > ? ORDER BY created_at DESC', {}, (time - $opt->{ago}));
-            }
-            return;
-        }
-    );
-
-    @$rows = map { $_->[0] } @$rows;
 
     my $forkman = Parallel::ForkManager->new(4);
+
+    my @where_clause = (" created_at > ? ",  (time - $opt->{ago}));
+    if (@$args) {
+        $where_clause[0] .= " AND (" . join(" OR ", ("instr(uri,?)")x@$args) . ")";
+        push @where_clause, @$args;
+    }
+
+    my $iter = Diversion::UrlArchiveIterator->new(
+        sql_where_clause => \@where_clause,
+        sql_order_clause => " created_at DESC, uri DESC "
+    );
+
     my @links;
-    for my $uri (shuffle @$rows)  {
+    while (my $row = $iter->next()) {
+        my $uri = $row->{uri};
+
         my $response = $url_archiver->get_local($uri);
         if ($response->{success}) {
             push @links, grep { ! $url_archiver->get_local($_) } @{find_links($response, $uri, $args)};
