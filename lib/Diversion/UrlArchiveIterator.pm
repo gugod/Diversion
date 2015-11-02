@@ -20,6 +20,11 @@ has sql_where_clause => (
     predicate => 1
 );
 
+has sql_order_clause => (
+    is => "ro",
+    predicate => 1
+);
+
 has reified => (
     is => "rw",
     default => sub { [ ] }
@@ -34,12 +39,17 @@ sub reify {
         url => sub {
             my ($dbh) = @_;
             my $SELECT_CLAUSE = "SELECT uri,sha1_digest,created_at FROM uri_archive";
-            my $ORDER_BY_CLAUSE = "ORDER BY uri ASC";
+            my $ORDER_CLAUSE = "ORDER BY uri ASC";
+
+            if ($self->has_sql_order_clause) {
+                $ORDER_CLAUSE = "ORDER BY " . $self->sql_order_clause;
+            }
+
             if ($self->has_sql_where_clause) {
                 my ($WHERE_CLAUSE, @values) = @{$self->sql_where_clause};
-                $dbh->selectall_arrayref("$SELECT_CLAUSE WHERE $WHERE_CLAUSE $ORDER_BY_CLAUSE LIMIT ?,1000", {Slice=>{}}, @values, $ext_cursor);
+                $dbh->selectall_arrayref("$SELECT_CLAUSE WHERE $WHERE_CLAUSE $ORDER_CLAUSE LIMIT ?,1000", {Slice=>{}}, @values, $ext_cursor);
             } else {
-                $dbh->selectall_arrayref("$SELECT_CLAUSE $ORDER_BY_CLAUSE LIMIT ?,1000", {Slice=>{}}, $ext_cursor);
+                $dbh->selectall_arrayref("$SELECT_CLAUSE $ORDER_CLAUSE LIMIT ?,1000", {Slice=>{}}, $ext_cursor);
             }
         }
     );
