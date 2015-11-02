@@ -15,6 +15,11 @@ has _cursor => (
     predicate => 1,
 );
 
+has sql_where_clause => (
+    is => "ro",
+    predicate => 1
+);
+
 has reified => (
     is => "rw",
     default => sub { [ ] }
@@ -28,7 +33,14 @@ sub reify {
     my $rows = $self->db_open(
         url => sub {
             my ($dbh) = @_;
-            $dbh->selectall_arrayref("SELECT uri,sha1_digest,created_at FROM uri_archive ORDER BY uri ASC LIMIT ?,1000", {Slice=>{}}, $ext_cursor);
+            my $SELECT_CLAUSE = "SELECT uri,sha1_digest,created_at FROM uri_archive";
+            my $ORDER_BY_CLAUSE = "ORDER BY uri ASC";
+            if ($self->has_sql_where_clause) {
+                my ($WHERE_CLAUSE, @values) = @{$self->sql_where_clause};
+                $dbh->selectall_arrayref("$SELECT_CLAUSE WHERE $WHERE_CLAUSE $ORDER_BY_CLAUSE LIMIT ?,1000", {Slice=>{}}, @values, $ext_cursor);
+            } else {
+                $dbh->selectall_arrayref("$SELECT_CLAUSE $ORDER_BY_CLAUSE LIMIT ?,1000", {Slice=>{}}, $ext_cursor);
+            }
         }
     );
 
