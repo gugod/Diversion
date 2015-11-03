@@ -11,8 +11,8 @@ sub execute {
     my $o = Diversion::UrlArchiver->new;
     for my $url (@$args) {
         $forkman->start and next;
-        $o->get_remote($url);
-        say "[$$] ARCHIVE $url";
+        my $res = $o->get_remote($url);
+        say "[$$] ARCHIVE $res->{status} $url";
         $forkman->finish;
     }
     $forkman->wait_all_children;

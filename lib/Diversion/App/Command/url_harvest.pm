@@ -30,8 +30,8 @@ sub harvest_these_links {
         next if $url_archiver->get_local($u);
         $forkman->start and next;
         $0 = "diversion url_harvest - $u";
-        $url_archiver->get_remote($u);
-        $log->info("[$$] HARVEST $u\n");
+        my $res = $url_archiver->get_remote($u);
+        $log->info("[$$] HARVEST $res->{status} $u\n");
         $forkman->finish;
     }
 }
