@@ -33,6 +33,7 @@ sub harvest_these_uris {
             next if $url_archiver->get_local($u);
             my $res = $url_archiver->get_remote($u);
             $log->info("[$$] HARVEST $res->{status} $u\n");
+            sleep(1);
         }
         $forkman->finish;
     }
