@@ -11,6 +11,7 @@ sub opt_spec {
     return (
         ["only-content-type=s", "Only the specify content-type"],
         ["only-binary", "Only binary"],
+        ["show-status-code", "Show status code"],
     )
 }
 
@@ -31,7 +32,13 @@ sub execute {
         next if $opt->{only_binary} && !ref($res->{content});
 
         if ($last ne $row->{uri}) {
-            say($last = $row->{uri});
+            $last = $row->{uri};
+
+            if ($opt->{show_status_code}) {
+                say $res->{status}, "\t", $last;
+            } else {
+                say $last;
+            }
             if ($opt->{delete}) {
                 $self->blob_store->delete($row->{sha1_digest});
                 $self->db_open(
