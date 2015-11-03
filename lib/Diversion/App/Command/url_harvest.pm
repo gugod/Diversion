@@ -65,7 +65,7 @@ sub execute {
         my $uri = $row->{uri};
 
         my $response = $url_archiver->get_local($uri);
-        return unless $response && $response->{success};
+        next unless $response && $response->{success};
 
         push @links, @{find_links($response, $uri, $args)};
         if (@links > 9999) {
