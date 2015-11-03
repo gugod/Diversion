@@ -9,7 +9,7 @@ use JSON::XS;
 
 sub opt_spec {
     return (
-        ["content-type=s", "Only the content-type"],
+        ["only-content-type=s", "Only the specify content-type"],
         ["only-binary", "Only binary"],
     )
 }
@@ -27,7 +27,7 @@ sub execute {
             $res = $JSON->decode( $blob ) if $blob;
         }
 
-        next if $opt->{content_type} && defined($res->{headers}{"content-type"}) && index($res->{headers}{"content-type"}, $opt->{content_type}) < 0;
+        next if $opt->{only_content_type} && defined($res->{headers}{"content-type"}) && index($res->{headers}{"content-type"}, $opt->{only_content_type}) < 0;
         next if $opt->{only_binary} && !ref($res->{content});
 
         if ($last ne $row->{uri}) {
