@@ -65,10 +65,9 @@ sub execute {
         my $uri = $row->{uri};
 
         my $response = $url_archiver->get_local($uri);
-        if ($response->{success}) {
-            push @links, @{find_links($response, $uri, $args)};
-        }
+        return unless $response && $response->{success};
 
+        push @links, @{find_links($response, $uri, $args)};
         if (@links > 9999) {
             @links = uniq(@links);
             harvest_these_uris($forkman, $url_archiver, \@links);
