@@ -22,17 +22,18 @@ sub opt_spec {
     )
 }
 
-sub harvest_these_links {
-    my ($forkman, $url_archiver, $links) = @_;
-
-    $links = order_by_round_robin_host($links);
+sub harvest_these_uris {
+    my ($forkman, $url_archiver, $uris) = @_;
+    my $groups = group_by_host($uris);
     my $orig0 = $0;
-    for my $u (@$links) {
-        next if $url_archiver->get_local($u);
+    for (values %$groups) {
         $forkman->start and next;
-        $0 = "diversion url_harvest - $u";
-        my $res = $url_archiver->get_remote($u);
-        $log->info("[$$] HARVEST $res->{status} $u\n");
+        for my $u (@$_) {
+            next if $url_archiver->get_local($u);
+            $0 = "diversion url_harvest - $u";
+            my $res = $url_archiver->get_remote($u);
+            $log->info("[$$] HARVEST $res->{status} $u\n");
+        }
         $forkman->finish;
     }
 }
@@ -54,7 +55,7 @@ sub execute {
 
     my $iter = Diversion::UrlArchiveIterator->new(
         sql_where_clause => \@where_clause,
-        sql_order_clause => " created_at DESC, uri DESC "
+        sql_order_clause => " created_at DESC"
     );
 
     my @links;
@@ -66,18 +67,16 @@ sub execute {
             push @links, grep { ! $url_archiver->get_local($_) } @{find_links($response, $uri, $args)};
         }
 
-        if (@links > 999) {
+        if (@links > 9999) {
             @links = uniq(@links);
-            harvest_these_links($forkman, $url_archiver, order_by_round_robin_host(\@links));
+            harvest_these_uris($forkman, $url_archiver, \@links);
             @links = ();
         }
     }
 
     if (@links) {
-        unless ($forkman->start) {
-            harvest_these_links($url_archiver, order_by_round_robin_host(\@links));
-            $forkman->finish;
-        }
+        @links = uniq(@links);
+        harvest_these_uris($url_archiver, \@links);
         @links = ();
     }
 
@@ -122,27 +121,18 @@ sub find_links {
     return $links;
 }
 
-sub order_by_round_robin_host {
+sub group_by_host {
     my ($uris) = @_;
-    my $ret = [];
     my %buckets;
     for (@$uris) {
-        my ($host) = $_ =~ m{\A https?:///? ([^/]+) (?: /|$ )}x;
+        my ($host) = $_ =~ m{\A https?:// ([^/]+) (?: /|$ )}x;
         if ($host) {
             push @{ $buckets{$host} }, $_;
         } else {
             say STDERR "Unknown protocal: $_";
         }
     }
-    my @hosts = keys %buckets;
-    while (keys %buckets > 0) {
-        for my $host (@hosts) {
-            next unless exists($buckets{$host});
-            push(@$ret, pop(@{$buckets{$host}}));
-            delete $buckets{$host} unless @{$buckets{$host}};
-        }
-    }
-    return $ret;
+    return \%buckets;
 }
 
 1;
