@@ -3,6 +3,7 @@ use v5.18;
 use Diversion::App -command;
 use Diversion::UrlArchiver;
 use Parallel::ForkManager;
+use Log::Any qw($log);
 
 sub opt_spec {
     return (
@@ -18,7 +19,7 @@ sub execute {
     for my $url (@$args) {
         $forkman->start and next;
         my $res = $o->get_remote($url);
-        say "[$$] ARCHIVE $res->{status} $url";
+        $log->info("[$$] ARCHIVE $res->{status} $url");
         $forkman->finish;
     }
     $forkman->wait_all_children;
