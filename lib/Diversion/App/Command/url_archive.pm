@@ -19,7 +19,7 @@ sub execute {
     for my $url (@$args) {
         $forkman->start and next;
         my $res = $o->get_remote($url);
-        $log->info("[$$] ARCHIVE $res->{status} $url");
+        $log->info("[$$] ARCHIVE $res->{status} $url\n");
         $forkman->finish;
     }
     $forkman->wait_all_children;
