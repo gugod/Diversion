@@ -18,6 +18,7 @@ use Diversion::UrlArchiveIterator;
 sub opt_spec {
     return (
         ["ago=i", "Include entries created up to this second ago.", { default => 86400 }]
+        ["workers=n", "number of worker processes.", { default => 4 }]
     )
 }
 
@@ -43,7 +44,7 @@ sub execute {
 
     my $rows = [];
 
-    my $forkman = Parallel::ForkManager->new(4);
+    my $forkman = Parallel::ForkManager->new( $opt->{workers} );
 
     my @where_clause = (" created_at > ? ",  (time - $opt->{ago}));
     if (@$args) {
