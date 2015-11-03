@@ -29,8 +29,8 @@ sub harvest_these_uris {
     for (values %$groups) {
         $forkman->start and next;
         for my $u (@$_) {
-            next if $url_archiver->get_local($u);
             $0 = "diversion url_harvest - $u";
+            next if $url_archiver->get_local($u);
             my $res = $url_archiver->get_remote($u);
             $log->info("[$$] HARVEST $res->{status} $u\n");
         }
