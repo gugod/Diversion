@@ -68,7 +68,7 @@ sub execute {
         next unless $response && $response->{success};
 
         push @links, @{find_links($response, $uri, $args)};
-        if (@links > 9999) {
+        if (@links > 99) {
             @links = uniq(@links);
             harvest_these_uris($forkman, $url_archiver, \@links);
             @links = ();
