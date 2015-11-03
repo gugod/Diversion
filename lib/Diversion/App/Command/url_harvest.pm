@@ -17,7 +17,7 @@ use Diversion::UrlArchiveIterator;
 
 sub opt_spec {
     return (
-        ["ago=i", "Include entries created up to this second ago.", { default => 86400 }]
+        ["ago=i", "Include entries created up to this second ago.", { default => 86400 }],
         ["workers=n", "number of worker processes.", { default => 4 }]
     )
 }
