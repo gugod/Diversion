@@ -37,7 +37,7 @@ package Diversion::UrlArchiver {
 
         my $blob_store = $self->blob_store;
 
-        my $response = HTTP::Tiny->new( timeout => 60, max_size => 409600 )->get($url);
+        my $response = HTTP::Tiny->new( timeout => 60, max_size => 409600, (agent => $ENV{DIVERSION_HTTP_USER_AGENT} || "Diversion ") )->get($url);
         if (is_binary($response->{content})) {
             $response->{content} = { sha1_digest => $blob_store->put($response->{content}) };
         }
