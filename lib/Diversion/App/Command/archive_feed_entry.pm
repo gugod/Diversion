@@ -15,8 +15,9 @@ use Diversion::FeedArchiver;
 
 sub opt_spec {
     return (
-        ["ago=i", "Include entries created up to this second ago.", { default => 86400 }]
-    )
+        ["ago=i", "Include entries created up to this second ago.", { default => 86400 }],
+        ["workers=n", "number of worker processes.", { default => 4 }],
+   )
 }
 
 sub execute {
@@ -29,7 +30,7 @@ sub execute {
         }
     );
 
-    my $forkman = Parallel::ForkManager->new(4);
+    my $forkman = Parallel::ForkManager->new( $opt->{workers} );
     my $o = Diversion::UrlArchiver->new;
     for my $row (shuffle @$rows) {
         unless ($o->get_local($row->{uri})) {
