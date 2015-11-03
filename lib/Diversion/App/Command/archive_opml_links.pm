@@ -30,12 +30,13 @@ sub execute {
     for (uniq grep { /^https?:/ } @feeds) {
         $forkman->start and next;
         my $feed_archiver = Diversion::FeedArchiver->new;
-        say "[pid=$$] Processing $_";
+        $log->info("[$$] Processing $_");
         eval {
             $feed_archiver->fetch_then_archive( $_ );
             1;
         } or do {
-            say STDERR $@;
+            my $err = @$ // "(zombie error)";
+            $log->debug($err);
         };
         $forkman->finish;
     }
