@@ -13,12 +13,18 @@ use Diversion::UrlArchiveIterator;
 
 use Parallel::ForkManager;
 
+sub opt_spec {
+    return (
+        ["workers=n", "number of worker processes.", { default => 4 }]
+    )
+}
+
 sub execute {
     my ($self, $opt, $args) = @_;
 
     my $feeds = $self->find_feeds();
 
-    my $forkman = Parallel::ForkManager->new(4);
+    my $forkman = Parallel::ForkManager->new($opt->{workers});
     for (shuffle @$feeds) {
         $forkman->start and next;
         my $feed_archiver = Diversion::FeedArchiver->new;

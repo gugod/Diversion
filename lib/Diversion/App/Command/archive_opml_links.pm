@@ -8,6 +8,12 @@ use Log::Any qw($log);
 use XML::XPath;
 use List::MoreUtils 'uniq';
 
+sub opt_spec {
+    return (
+        ["workers=n", "number of worker processes.", { default => 4 }]
+    )
+}
+
 sub execute {
     my ($self, $opt, $args) = @_;
 
@@ -20,8 +26,7 @@ sub execute {
         }
     }
 
-
-    my $forkman = Parallel::ForkManager->new(4);
+    my $forkman = Parallel::ForkManager->new($opt->{workers});
     for (uniq grep { /^https?:/ } @feeds) {
         $forkman->start and next;
         my $feed_archiver = Diversion::FeedArchiver->new;
