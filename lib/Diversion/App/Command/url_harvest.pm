@@ -39,7 +39,6 @@ sub harvest_these_uris {
         }
         $forkman->finish;
     }
-    $forkman->wait_all_children;
 }
 
 sub execute {
