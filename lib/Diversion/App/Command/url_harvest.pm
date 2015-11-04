@@ -6,11 +6,12 @@ with 'Diversion::Db';
 
 use List::Util qw(shuffle);
 use List::MoreUtils qw( uniq );
+use IO::Handle;
+use Digest::MD4 qw( md4 );
 
 use Log::Any qw($log);
 use URI;
 use Mojo::DOM;
-use Parallel::ForkManager;
 
 use Diversion::UrlArchiver;
 use Diversion::UrlArchiveIterator;
@@ -23,32 +24,27 @@ sub opt_spec {
     )
 }
 
-sub harvest_these_uris {
-    my ($forkman, $url_archiver, $uris) = @_;
-    my $groups = group_by_host($uris);
-    for (values %$groups) {
-        $forkman->start and next;
-        for my $u (@$_) {
-            $0 = "diversion url_harvest - $u";
+sub execute {
+    my ($self, $opt, $args) = @_;
+    my $url_archiver = Diversion::UrlArchiver->new;
+
+    my $worker_sub = sub {
+        my $io = shift;
+        my $orig0 = $0;
+        while (my $u = <$io>) {
+            chomp($u);
             next if $url_archiver->get_local($u);
+            $0 = "diversion url_harvest - $u";
             my $begin_time = time;
             my $res = $url_archiver->get_remote($u);
             my $spent_time = time - $begin_time;
             $log->info("[$$] HARVEST $res->{status} (${spent_time}s) $u\n");
             sleep(1);
+            $0 = "diversion url_harvest - (IDLE)";
         }
-        $forkman->finish;
-    }
-}
-
-sub execute {
-    my ($self, $opt, $args) = @_;
-
-    my $url_archiver = Diversion::UrlArchiver->new;
-
-    my $rows = [];
-
-    my $forkman = Parallel::ForkManager->new( $opt->{workers} );
+        return 1;
+    };
+    my @workers = map { fork_worker($worker_sub) } 1 .. $opt->{workers};
 
     my @where_clause = (" created_at > ? ",  (time - $opt->{ago}));
     if (@$args) {
@@ -69,22 +65,21 @@ sub execute {
         my $response = $url_archiver->get_local($uri);
         next unless $response && $response->{success};
 
-        push @links, @{find_links($response, $uri, $args)};
-        if (@links > 99) {
-            @links = uniq(@links);
-            $harvested_count += @links;
-            harvest_these_uris($forkman, $url_archiver, \@links);
-            @links = ();
+        my @uris = @{find_links($response, $uri, $args)};
+        for my $u (@uris) {
+            my ($host) = $u =~ m{\A https?:// ([^/]+) (?: /|$ )}x;
+            if (!$host) {
+                say STDERR "Weird URI: $u";
+                next;
+            }
+            my $i = unpack("I*",md4($host)) % $opt->{workers};
+            my $worker_fh = $workers[$i][1];
+            print $worker_fh "$u\n";
         }
     }
 
-    if (@links) {
-        @links = uniq(@links);
-        harvest_these_uris($url_archiver, \@links);
-        @links = ();
-    }
-
-    $forkman->wait_all_children;
+    close($_->[1]) for @workers;
+    waitpid(-1,0) for 0..$#workers;
 }
 
 sub find_links {
@@ -125,18 +120,21 @@ sub find_links {
     return $links;
 }
 
-sub group_by_host {
-    my ($uris) = @_;
-    my %buckets;
-    for (@$uris) {
-        my ($host) = $_ =~ m{\A https?:// ([^/]+) (?: /|$ )}x;
-        if ($host) {
-            push @{ $buckets{$host} }, $_;
-        } else {
-            say STDERR "Unknown protocal: $_";
-        }
+sub fork_worker {
+    my ($cb) = @_;
+    my ($pr,$pw);
+    pipe($pr, $pw);
+
+    $pr->autoflush();
+    $pw->autoflush();
+
+    if (my $kidpid = fork()) {
+        close($pr);
+        return [$kidpid, $pw];
+    } else {
+        close($pw);
+        exit $cb->($pr);
     }
-    return \%buckets;
 }
 
 1;
