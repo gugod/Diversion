@@ -17,6 +17,7 @@ use Diversion::UrlArchiveIterator;
 
 sub opt_spec {
     return (
+        ["limit=i", "Harvest upto to this many amount of URLs", { default => 3600 }],
         ["ago=i", "Include entries created up to this second ago.", { default => 86400 }],
         ["workers=n", "number of worker processes.", { default => 4 }]
     )
@@ -61,8 +62,9 @@ sub execute {
         sql_order_clause => " created_at DESC"
     );
 
+    my $harvested_count = 0;
     my @links;
-    while (my $row = $iter->next()) {
+    while ((my $row = $iter->next()) && ($harvested_count < $opt->{limit}) ) {
         my $uri = $row->{uri};
 
         my $response = $url_archiver->get_local($uri);
@@ -71,6 +73,7 @@ sub execute {
         push @links, @{find_links($response, $uri, $args)};
         if (@links > 99) {
             @links = uniq(@links);
+            $harvested_count += @links;
             harvest_these_uris($forkman, $url_archiver, \@links);
             @links = ();
         }
