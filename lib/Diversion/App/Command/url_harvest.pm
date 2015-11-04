@@ -25,14 +25,15 @@ sub opt_spec {
 sub harvest_these_uris {
     my ($forkman, $url_archiver, $uris) = @_;
     my $groups = group_by_host($uris);
-    my $orig0 = $0;
     for (values %$groups) {
         $forkman->start and next;
         for my $u (@$_) {
             $0 = "diversion url_harvest - $u";
             next if $url_archiver->get_local($u);
+            my $begin_time = time;
             my $res = $url_archiver->get_remote($u);
-            $log->info("[$$] HARVEST $res->{status} $u\n");
+            my $spent_time = time - $begin_time;
+            $log->info("[$$] HARVEST $res->{status} (${spent_time}s) $u\n");
             sleep(1);
         }
         $forkman->finish;
