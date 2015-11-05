@@ -75,6 +75,7 @@ sub execute {
             my $i = unpack("I*",md4($host)) % $opt->{workers};
             my $worker_fh = $workers[$i][1];
             print $worker_fh "$u\n";
+            $harvested_count += 1;
         }
     }
 
