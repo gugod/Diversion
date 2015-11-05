@@ -67,6 +67,7 @@ sub execute {
 
         my @uris = @{find_links($response, $uri, $args)};
         for my $u (@uris) {
+            next if $url_archiver->get_local($u);
             my ($host) = $u =~ m{\A https?:// ([^/]+) (?: /|$ )}x;
             if (!$host) {
                 say STDERR "Weird URI: $u";
