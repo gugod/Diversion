@@ -113,7 +113,7 @@ sub find_links {
         $x = $x->grep(
             sub {
                 my $uri = $_;
-                (grep { index($uri->host, $_) >= 0 } @$substr_constraint) > 0;
+                $uri->host && ((grep { index($uri->host, $_) >= 0 } @$substr_constraint) > 0);
             }
         );
     }
