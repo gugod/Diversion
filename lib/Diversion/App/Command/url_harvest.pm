@@ -30,7 +30,7 @@ sub execute {
 
     my $worker_sub = sub {
         my $io = shift;
-        my $orig0 = $0;
+        $0 = "diversion url_harvest - WORKER";
         while (my $u = <$io>) {
             chomp($u);
             next if $url_archiver->get_local($u);
