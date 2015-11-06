@@ -54,7 +54,7 @@ sub execute {
 
     my $iter = Diversion::UrlArchiveIterator->new(
         sql_where_clause => \@where_clause,
-        sql_order_clause => " created_at ASC"
+        sql_order_clause => "created_at/3600 ASC,length(uri) ASC",
     );
 
     my $harvested_count = 0;
