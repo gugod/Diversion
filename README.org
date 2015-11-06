@@ -1,6 +1,16 @@
 
 * database
 
+** content
+
+CREATE TABLE content (
+    'uri'   varchar(1024) NOT NULL,
+    'uri_response_sha1_digest' char(40) NOT NULL,
+    'sha1_digest' char(40) NOT NULL,
+    'created_at' int NOT NULL,
+    PRIMARY KEY (`uri`, `uri_response_sha1_digest`)
+);
+
 ** uri_archive
 
 CREATE TABLE uri_archive (
