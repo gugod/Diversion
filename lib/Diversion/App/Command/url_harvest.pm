@@ -26,6 +26,34 @@ sub opt_spec {
 
 sub execute {
     my ($self, $opt, $args) = @_;
+    if (@$args) {
+        return $self->execute_one_worker_per_constraint($opt, $args);
+    } else {
+        return $self->execute_balance($opt, []);
+    }
+}
+
+sub execute_one_worker_per_constraint {
+    my ($self, $opt, $args) = @_;
+
+    my @kids;
+    for (@$args) {
+        if (@kids >= $opt->{workers}) {
+            my $pid = waitpid(-1,0);
+            @kids = grep { $_ != $pid } @kids;
+        }
+        if (my $kidpid = fork()) {
+            push @kids, $kidpid;
+        } else {
+            $self->process_one_host_constraint($opt->{ago}, $_);
+            exit;
+        }
+    }
+    waitpid(-1,0) for @kids;
+}
+
+sub execute_balance {
+    my ($self, $opt, $args) = @_;
     my $url_archiver = Diversion::UrlArchiver->new;
 
     my $worker_sub = sub {
@@ -47,10 +75,6 @@ sub execute {
     my @workers = map { fork_worker($worker_sub) } 1 .. $opt->{workers};
 
     my @where_clause = (" created_at > ? ",  (time - $opt->{ago}));
-    if (@$args) {
-        $where_clause[0] .= " AND (" . join(" OR ", ("instr(uri,?)")x@$args) . ")";
-        push @where_clause, @$args;
-    }
 
     my $iter = Diversion::UrlArchiveIterator->new(
         sql_where_clause => \@where_clause,
@@ -82,6 +106,44 @@ sub execute {
 
     close($_->[1]) for @workers;
     waitpid(-1,0) for 0..$#workers;
+}
+
+sub process_one_host_constraint {
+    my ($self, $ago, $substr_constraint) = @_;
+    my $url_archiver = Diversion::UrlArchiver->new;
+
+    my @where_clause = (" created_at > ? AND instr(uri,?) ", $ago, $substr_constraint);
+
+    my $iter = Diversion::UrlArchiveIterator->new(
+        sql_where_clause => \@where_clause,
+        sql_order_clause => "sha1_digest ASC",
+    );
+
+    my @links;
+    while (my $row = $iter->next()) {
+        my $uri = $row->{uri};
+
+        my $response = $url_archiver->get_local($uri);
+        next unless $response && $response->{success};
+
+        my @uris = @{find_links($response, $uri, [$substr_constraint])};
+        for my $u (@uris) {
+            my ($host) = $u =~ m{\A https?:// ([^/]+) (?: /|$ )}x;
+            if (!$host) {
+                say STDERR "Weird URI: $u";
+                next;
+            }
+            next if $url_archiver->get_local($u);
+
+            $0 = "diversion url_harvest - $u";
+            my $begin_time = time;
+            my $res = $url_archiver->get_remote($u);
+            my $spent_time = time - $begin_time;
+            $log->info("[$$] HARVEST $res->{status} (${spent_time}s) $u\n");
+            sleep(1);
+            $0 = "diversion url_harvest - (IDLE)";
+        }
+    }
 }
 
 sub find_links {
