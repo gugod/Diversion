@@ -75,7 +75,7 @@ sub execute_balance {
     };
     my @workers = map { fork_worker($worker_sub) } 1 .. $opt->{workers};
 
-    my @where_clause = (" created_at > ? ",  (time - $opt->{ago}));
+    my @where_clause = (" created_at > ? AND created_at < ? ",  (time - $opt->{ago}), scalar(time));
 
     my $iter = Diversion::UrlArchiveIterator->new(
         sql_where_clause => \@where_clause,
@@ -113,7 +113,7 @@ sub process_one_host_constraint {
     my ($self, $opt, $substr_constraint) = @_;
     my $url_archiver = Diversion::UrlArchiver->new;
 
-    my @where_clause = (" created_at > ? ", $opt->{ago});
+    my @where_clause = (" created_at > ? AND created_at < ? ", $opt->{ago}, scalar(time));
     $where_clause[0] .= " AND (" . join(" OR ", ("instr(uri,?)")x@$substr_constraint) . ")";
     push @where_clause, @$substr_constraint;
 
