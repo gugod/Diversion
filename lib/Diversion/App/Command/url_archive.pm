@@ -20,6 +20,9 @@ sub execute {
         $forkman->start and next;
         my $res = $o->get_remote($url);
         $log->info("[$$] ARCHIVE $res->{status} $url\n");
+        if ($res->{status} eq '599') {
+            $log->debug("[$$] DEBUG status = 599: $res->{content}\n");
+        }
         $forkman->finish;
     }
     $forkman->wait_all_children;
