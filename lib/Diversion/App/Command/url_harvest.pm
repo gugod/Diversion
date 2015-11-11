@@ -128,6 +128,7 @@ sub process_one_host_constraint {
         next unless $response && $response->{success};
 
         my @uris = @{find_links($response, $uri, $substr_constraint)};
+        my $prev_u;
         for my $u (@uris) {
             my ($host) = $u =~ m{\A https?:// ([^/]+) (?: /|$ )}x;
             if (!$host) {
@@ -135,13 +136,15 @@ sub process_one_host_constraint {
                 next;
             }
             next if $url_archiver->get_local($u);
+
+            sleep(1) if $prev_u && substr($prev_u,0,24) eq substr($u,0,24);
             $0 = "diversion url_harvest - $u";
             my $begin_time = time;
             my $res = $url_archiver->get_remote($u);
             my $spent_time = time - $begin_time;
             $log->info("[$$] HARVEST $res->{status} (${spent_time}s) $u\n");
-            sleep(1);
             $0 = "diversion url_harvest - (IDLE)";
+            $prev_u = $u;
         }
     }
 }
