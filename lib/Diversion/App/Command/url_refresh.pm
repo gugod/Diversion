@@ -13,21 +13,27 @@ sub execute {
     my ($self, $opt, $args) = @_;
 
     my $uri = "";
-    my $url_archiver = Diversion::UrlArchiver->new;
-    my $iter = Diversion::UrlArchiveIterator->new();
-    while (my $row = $iter->next) {
-        if ($uri ne $row->{uri}) {
-            $uri = $row->{uri};
-            if (@$args) {
-                my $matched = 0;
-                my $re = "(" . join("|", map { qr{\Q$_\E} } @$args) . ")";
-                next unless $uri =~ m{$re};
-            }
+    my $url_archiver = Diversion::UrlArchiver->new();
+    my $iter = Diversion::UrlArchiveIterator->new( sql_order_clause => " uri " );
 
-            say $uri;
-            $url_archiver->get_remote($uri);
-        }
+    my $re;
+    if (@$args) {
+        $re = "(" . join("|", map { qr{\Q$_\E} } @$args) . ")";
     }
+
+    my $forkman = Parallel::ForkManager->new( 4 );
+
+    while (my $row = $iter->next) {
+        next unless $uri ne $row->{uri};
+        $uri = $row->{uri};
+        next unless !$re || $uri =~ m{$re};
+
+        $forkman->start and next;
+        my $res = $url_archiver->get_remote($uri);
+        say "[$$] $res->{status} $uri";
+        $forkman->finish;
+    }
+    $forkman->wait_all_children;
 }
 
 1;
