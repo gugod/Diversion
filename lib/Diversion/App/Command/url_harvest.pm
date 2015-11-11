@@ -69,7 +69,6 @@ sub execute_balance {
             if ($res->{status} eq '599') {
                 $log->debug("[$$] DEBUG status = 599: $res->{content}\n");
             }
-            sleep(1);
             $0 = "diversion url_harvest - (IDLE)";
         }
         return 1;
@@ -131,7 +130,6 @@ sub process_one_host_constraint {
         next unless $response && $response->{success};
 
         my @uris = @{find_links($response, $uri, $substr_constraint)};
-        my $prev_u;
         for my $u (@uris) {
             my ($host) = $u =~ m{\A https?:// ([^/]+) (?: /|$ )}x;
             if (!$host) {
@@ -140,7 +138,6 @@ sub process_one_host_constraint {
             }
             next if $url_archiver->get_local($u);
 
-            sleep(1) if $prev_u && substr($prev_u,0,24) eq substr($u,0,24);
             $0 = "diversion url_harvest - $u";
             my $begin_time = time;
             my $res = $url_archiver->get_remote($u);
@@ -150,7 +147,6 @@ sub process_one_host_constraint {
                 $log->debug("[$$] DEBUG status = 599: $res->{content}\n");
             }
             $0 = "diversion url_harvest - (IDLE)";
-            $prev_u = $u;
         }
     }
 }
