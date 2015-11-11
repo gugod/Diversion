@@ -36,16 +36,15 @@ sub execute {
 sub execute_one_worker_per_constraint {
     my ($self, $opt, $args) = @_;
 
+    my @constraint = @$args;
+    my $shard_size = @$args / $opt->{workers};
     my @kids;
-    for (@$args) {
-        if (@kids >= $opt->{workers}) {
-            my $pid = waitpid(-1,0);
-            @kids = grep { $_ != $pid } @kids;
-        }
+    for (1 .. $opt->{workers}) {
+        my @batch = splice(@constraint, 0, 1+@constraint/$opt->{workers});
         if (my $kidpid = fork()) {
             push @kids, $kidpid;
         } else {
-            $self->process_one_host_constraint($opt->{ago}, $_);
+            $self->process_one_host_constraint($opt, \@batch);
             exit;
         }
     }
@@ -109,10 +108,12 @@ sub execute_balance {
 }
 
 sub process_one_host_constraint {
-    my ($self, $ago, $substr_constraint) = @_;
+    my ($self, $opt, $substr_constraint) = @_;
     my $url_archiver = Diversion::UrlArchiver->new;
 
-    my @where_clause = (" created_at > ? AND instr(uri,?) ", $ago, $substr_constraint);
+    my @where_clause = (" created_at > ? ", $opt->{ago});
+    $where_clause[0] .= " AND (" . join(" OR ", ("instr(uri,?)")x@$substr_constraint) . ")";
+    push @where_clause, @$substr_constraint;
 
     my $iter = Diversion::UrlArchiveIterator->new(
         sql_where_clause => \@where_clause,
@@ -126,7 +127,7 @@ sub process_one_host_constraint {
         my $response = $url_archiver->get_local($uri);
         next unless $response && $response->{success};
 
-        my @uris = @{find_links($response, $uri, [$substr_constraint])};
+        my @uris = @{find_links($response, $uri, $substr_constraint)};
         for my $u (@uris) {
             my ($host) = $u =~ m{\A https?:// ([^/]+) (?: /|$ )}x;
             if (!$host) {
@@ -134,7 +135,6 @@ sub process_one_host_constraint {
                 next;
             }
             next if $url_archiver->get_local($u);
-
             $0 = "diversion url_harvest - $u";
             my $begin_time = time;
             my $res = $url_archiver->get_remote($u);
