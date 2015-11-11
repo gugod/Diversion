@@ -66,6 +66,9 @@ sub execute_balance {
             my $res = $url_archiver->get_remote($u);
             my $spent_time = time - $begin_time;
             $log->info("[$$] HARVEST $res->{status} (${spent_time}s) $u\n");
+            if ($res->{status} eq '599') {
+                $log->debug("[$$] DEBUG status = 599: $res->{content}\n");
+            }
             sleep(1);
             $0 = "diversion url_harvest - (IDLE)";
         }
@@ -143,6 +146,9 @@ sub process_one_host_constraint {
             my $res = $url_archiver->get_remote($u);
             my $spent_time = time - $begin_time;
             $log->info("[$$] HARVEST $res->{status} (${spent_time}s) $u\n");
+            if ($res->{status} eq '599') {
+                $log->debug("[$$] DEBUG status = 599: $res->{content}\n");
+            }
             $0 = "diversion url_harvest - (IDLE)";
             $prev_u = $u;
         }
