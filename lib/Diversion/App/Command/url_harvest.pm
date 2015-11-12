@@ -27,6 +27,7 @@ sub opt_spec {
 sub execute {
     my ($self, $opt, $args) = @_;
     if (@$args) {
+        @$args = map { (split " ", $_) } @$args;
         return $self->execute_one_worker_per_constraint($opt, $args);
     } else {
         return $self->execute_balance($opt, []);
