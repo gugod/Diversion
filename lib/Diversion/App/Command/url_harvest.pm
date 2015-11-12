@@ -41,6 +41,7 @@ sub execute_one_worker_per_constraint {
     my @kids;
     for (1 .. $opt->{workers}) {
         my @batch = splice(@constraint, 0, 1+@constraint/$opt->{workers});
+        next unless @batch;
         if (my $kidpid = fork()) {
             push @kids, $kidpid;
         } else {
