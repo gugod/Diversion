@@ -125,7 +125,8 @@ sub process_one_host_constraint {
     );
 
     my @links;
-    while (my $row = $iter->next()) {
+    my $harvested_count = 0;
+    while ((my $row = $iter->next()) && $harvested_count < $opt->{limit}) {
         my $uri = $row->{uri};
 
         my $response = $url_archiver->get_local($uri);
@@ -149,6 +150,7 @@ sub process_one_host_constraint {
                 $log->debug("[$$] DEBUG status = 599: $res->{content}\n");
             }
             $0 = "diversion url_harvest - (IDLE)";
+            $harvested_count++;
         }
     }
 }
