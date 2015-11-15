@@ -39,6 +39,7 @@ requires 'TOML'                           => '0';
 requires 'Test::Spec'                     => '0';
 requires 'URI'                            => '0';
 requires 'URI::Escape'                    => '0';
+requires 'URI::Split'                     => '0';
 requires 'Web::Query'                     => '0';
 requires 'XML::FeedPP'                    => '0';
 requires 'XML::Loy'                       => '0.19';
