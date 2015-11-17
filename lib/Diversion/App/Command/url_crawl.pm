@@ -6,6 +6,7 @@ with 'Diversion::Db';
 use Log::Any qw($log);
 
 use List::Util 'shuffle';
+use List::MoreUtils 'uniq';
 use Parallel::ForkManager;
 
 sub opt_spec {
@@ -42,7 +43,7 @@ sub execute {
     }
     $forkman->wait_all_children;
 
-    for my $u (shuffle @uris) {
+    for my $u (shuffle uniq @uris) {
         $forkman->start and next;
         my $response = $url_archiver->get_remote($u);
         $log->debug("[$$] CRAWL $response->{status} $u\n");
