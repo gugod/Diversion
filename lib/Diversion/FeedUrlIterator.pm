@@ -10,26 +10,25 @@ my $JSON = JSON::XS->new;
 
 has url_archive_iterator => (
     is => "ro",
-    default => sub { Diversion::UrlArchiveIterator->new( sql_order_clause => "uri" ) }
+    default => sub { Diversion::UrlArchiveIterator->new( sql_order_clause => "uri, created_at DESC" ) }
 );
 
 sub reify {
     my ($self) = @_;
     my $rows = [];
     my $iter = $self->url_archive_iterator;
-    my $last = "";
-    while ((@$rows < 2) && (my $row = $iter->next)) {
-        next unless $row->{uri} =~ /^https?:/ && $last ne $row->{uri};
-        my $blob = $self->blob_store->get($row->{sha1_digest});
+    my $last = $iter->next;
+    while ((@$rows < 1) && (my $row = $iter->next)) {
+        next unless $row->{uri} =~ /^https?:/;
+        next if $last->{uri} eq $row->{uri};
+        my $blob = $self->blob_store->get($last->{sha1_digest});
         unless (defined($blob)) {
-            warn "Blob is missing: $row->{sha1_digest} $row->{uri}";
+            warn "Blob is missing: $last->{sha1_digest} $last->{uri}";
             next;
         }
         my $res = $JSON->decode( $blob );
-        next unless defined($res->{headers}{"content-type"}) && $res->{headers}{"content-type"} =~ /atom|rss/;
-
-        $last = $row->{uri};
-        push @$rows, $row;
+        push(@$rows, $last) if defined($res->{headers}{"content-type"}) && $res->{headers}{"content-type"} =~ /atom|rss/;
+        $last = $row;
     }
     $self->reified($rows);
     $self->_cursor(0);
