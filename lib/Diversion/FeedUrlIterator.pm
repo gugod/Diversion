@@ -18,7 +18,7 @@ sub reify {
     my $rows = [];
     my $iter = $self->url_archive_iterator;
     my $last = "";
-    while ((@$rows < 1) && (my $row = $iter->next)) {
+    while ((@$rows < 2) && (my $row = $iter->next)) {
         next unless $row->{uri} =~ /^https?:/ && $last ne $row->{uri};
         my $blob = $self->blob_store->get($row->{sha1_digest});
         unless (defined($blob)) {
