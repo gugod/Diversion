@@ -9,7 +9,7 @@ use List::Util qw(shuffle);
 use List::MoreUtils qw(uniq);
 
 use Diversion::FeedArchiver;
-use Diversion::UrlArchiveIterator;
+use Diversion::FeedUrlIterator;
 
 use Parallel::ForkManager;
 
@@ -22,15 +22,16 @@ sub opt_spec {
 sub execute {
     my ($self, $opt, $args) = @_;
 
-    my $feeds = $self->find_feeds();
-
+    my $iter = Diversion::FeedUrlIterator->new;
     my $forkman = Parallel::ForkManager->new($opt->{workers});
-    for (shuffle @$feeds) {
+
+    while (my $row = $iter->next) {
+        my $u = $row->{uri};
         $forkman->start and next;
         my $feed_archiver = Diversion::FeedArchiver->new;
-        say "[pid=$$] Processing $_";
+        say "[pid=$$] Processing $u";
         eval {
-            $feed_archiver->fetch_then_archive( $_ );
+            $feed_archiver->fetch_then_archive( $u );
             1;
         } or do {
             say STDERR $@;
@@ -38,29 +39,6 @@ sub execute {
         $forkman->finish;
     }
     $forkman->wait_all_children;
-}
-
-sub find_feeds {
-    my ($self) = @_;
-    my $feeds = [];
-
-    my $last = "";
-    my $JSON = JSON->new;
-    my $iter = Diversion::UrlArchiveIterator->new();
-    while (my $row = $iter->next) {
-        my $blob = $self->blob_store->get($row->{sha1_digest});
-        unless (defined($blob)) {
-            warn "Blob is missing: $row->{sha1_digest} $row->{uri}";
-            next;
-        }
-        my $res = $JSON->decode( $blob );
-        next unless $row->{uri} =~ /^https?:/ && defined($res->{headers}{"content-type"}) && $res->{headers}{"content-type"} =~ /atom|rss/;
-        if ($last ne $row->{uri}) {
-            push(@$feeds, $last = $row->{uri});
-        }
-    }
-    @$feeds = uniq(@$feeds);
-    return $feeds;
 }
 
 1;
