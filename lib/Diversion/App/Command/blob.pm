@@ -16,32 +16,23 @@ sub execute {
     my ($self, $opt) = @_;
 
     if ($opt->{orphan}) {
-        $self->db_open(
-            url =>
+        my $dbh_url = $self->db_open('url');
+        my $dbh_feed = $self->db_open('feed');
+        $self->blob_store->each(
             sub {
-                my ($dbh_url) = @_;
-                $self->db_open(
-                    feed =>
-                    sub {
-                        my ($dbh_feed) = @_;
-
-                        $self->blob_store->each(
-                            sub {
-                                my ($digest) = @_;
-                                my $x = $dbh_url->selectcol_arrayref(q{ SELECT 1 from uri_archive WHERE sha1_digest = ? LIMIT 1}, {}, $digest);
-                                my $y = $dbh_feed->selectcol_arrayref(q{ SELECT 1 from feed_archive WHERE sha1_digest = ? LIMIT 1}, {}, $digest);
-                                unless ( $x->[0] || $y->[0]) {
-                                    say $digest;
-                                    if ($opt->{delete}) {
-                                        $self->blob_store->delete($digest);
-                                    }
-                                }
-                            }
-                        );
+                my ($digest) = @_;
+                my $x = $dbh_url->selectcol_arrayref(q{ SELECT 1 from uri_archive WHERE sha1_digest = ? LIMIT 1}, {}, $digest);
+                my $y = $dbh_feed->selectcol_arrayref(q{ SELECT 1 from feed_archive WHERE sha1_digest = ? LIMIT 1}, {}, $digest);
+                unless ( $x->[0] || $y->[0]) {
+                    say $digest;
+                    if ($opt->{delete}) {
+                        $self->blob_store->delete($digest);
                     }
-                );
+                }
             }
         );
+        $dbh_url->disconnect;
+        $dbh_feed->disconnect;
     } else {
         $self->blob_store->each(sub {my ($digest) = @_; say $digest });
     }
