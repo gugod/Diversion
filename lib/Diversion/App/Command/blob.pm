@@ -22,12 +22,14 @@ sub execute {
             sub {
                 my ($digest) = @_;
                 my $x = $dbh_url->selectcol_arrayref(q{ SELECT 1 from uri_archive WHERE sha1_digest = ? LIMIT 1}, {}, $digest);
+                return if $x->[0];
+
                 my $y = $dbh_feed->selectcol_arrayref(q{ SELECT 1 from feed_archive WHERE sha1_digest = ? LIMIT 1}, {}, $digest);
-                unless ( $x->[0] || $y->[0]) {
-                    say $digest;
-                    if ($opt->{delete}) {
-                        $self->blob_store->delete($digest);
-                    }
+                return if $y->[0];
+
+                say $digest;
+                if ($opt->{delete}) {
+                    $self->blob_store->delete($digest);
                 }
             }
         );
