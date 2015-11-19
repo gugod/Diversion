@@ -87,7 +87,7 @@ sub each {
     my $files = File::Next::files( $self->root );
     my $prefix_length = length($self->root);
     while ( defined ( my $file = $files->() ) ) {
-        my $digest = substr($file, $prefix_length, 4) . substr($file, $prefix_length + 5);
+        my $digest = substr($file, $prefix_length, 4) . substr($file, $prefix_length + 5, 36);
         $cb->($digest);
     }
 }
