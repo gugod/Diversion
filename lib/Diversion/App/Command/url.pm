@@ -13,7 +13,9 @@ sub opt_spec {
         ["aggregation=s", "Do aggregation"],
         ["only-content-type=s", "Only the specify content-type"],
         ["only-binary", "Only binary"],
+        ["only-missing-blob", "Only the one with missing blob."],
         ["show-status-code", "Show status code"],
+        ["delete", "Delete what's found"],
     )
 }
 
@@ -29,7 +31,16 @@ sub execute {
         my $res;
         if ($should_load_res) {
             my $blob = $self->blob_store->get($row->{sha1_digest});
-            $res = $JSON->decode( $blob ) if $blob;
+            if (defined($blob)) {
+                $res = $JSON->decode( $blob );
+                next if $opt->{only_missing_blob};
+            } elsif ($opt->{only_missing_blob}) {
+                say( $row->{sha1_digest} . "\t" . $row->{uri} );
+                if ($opt->{delete}) {
+                    $self->delete_blob_and_uri_archive_reference($row->{sha1_digest});
+                }
+                next;
+            }
         }
 
         next if $opt->{only_content_type} && defined($res->{headers}{"content-type"}) && index($res->{headers}{"content-type"}, $opt->{only_content_type}) < 0;
@@ -52,13 +63,7 @@ sub execute {
                 say $last;
             }
             if ($opt->{delete}) {
-                $self->blob_store->delete($row->{sha1_digest});
-                $self->db_open(
-                    url => sub {
-                        my ($dbh) = @_;
-                        $dbh->do("DELETE FROM uri_archive WHERE sha1_digest = ?", {}, $row->{sha1_digest});
-                    }
-                );
+                $self->delete_blob_and_uri_archive_reference($row->{sha1_digest});
             }
         }
     }
@@ -70,6 +75,17 @@ sub execute {
             }
         }
     }
+}
+
+sub delete_blob_and_uri_archive_reference {
+    my ($self, $sha1_digest) = @_;
+    $self->blob_store->delete($sha1_digest);
+    $self->db_open(
+        url => sub {
+            my ($dbh) = @_;
+            $dbh->do("DELETE FROM uri_archive WHERE sha1_digest = ?", {}, $sha1_digest);
+        }
+    );
 }
 
 1;
