@@ -69,6 +69,11 @@ sub get {
     return undef;
 }
 
+sub exists {
+    my ($self, $digest) = @_;
+    return $self->_fh_ro($digest) ? 1 : 0;
+}
+
 sub delete {
     my ($self, $digest) = @_;
     my $f = $self->_filename($digest);
