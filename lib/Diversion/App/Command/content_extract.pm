@@ -2,7 +2,7 @@ package Diversion::App::Command::content_extract;
 use v5.18;
 use Diversion::App -command;
 use Moo;
-with 'Diversion::AppRole';
+with 'Diversion::Service';
 
 use Encode;
 use JSON;

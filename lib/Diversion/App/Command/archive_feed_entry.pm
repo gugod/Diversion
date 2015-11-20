@@ -3,7 +3,7 @@ use v5.18;
 use Diversion::App -command;
 
 use Moo;
-with 'Diversion::AppRole';
+with 'Diversion::Service';
 
 use List::Util qw( shuffle );
 

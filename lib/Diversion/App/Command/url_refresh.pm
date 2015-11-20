@@ -2,7 +2,7 @@ package Diversion::App::Command::url_refresh;
 use v5.18;
 use Diversion::App -command;
 use Moo;
-with 'Diversion::AppRole';
+with 'Diversion::Service';
 
 use Diversion::UrlArchiver;
 use Diversion::UrlArchiveIterator;

@@ -1,4 +1,4 @@
-package Diversion::AppRole;
+package Diversion::Service;
 use Moo::Role;
 use Diversion::BlobStore;
 

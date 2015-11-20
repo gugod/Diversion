@@ -2,7 +2,7 @@ package Diversion::App::Command::url_crawl;
 use v5.18;
 use Diversion::App -command;
 use Moo;
-with 'Diversion::AppRole';
+with 'Diversion::Service';
 use Log::Any qw($log);
 
 use List::Util 'shuffle';

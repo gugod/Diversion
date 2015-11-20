@@ -1,7 +1,7 @@
 package Diversion::App::Command::feed;
 use v5.18;
 use Moo;
-with 'Diversion::AppRole';
+with 'Diversion::Service';
 use Diversion::App -command;
 
 use Diversion::FeedUrlIterator;

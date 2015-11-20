@@ -2,7 +2,7 @@ package Diversion::App::Command::blob;
 use v5.18;
 
 use Moo;
-with 'Diversion::AppRole';
+with 'Diversion::Service';
 use Diversion::App -command;
 
 sub opt_spec {

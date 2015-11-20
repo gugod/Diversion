@@ -2,7 +2,7 @@ use v5.14;
 
 package Diversion::FeedArchiver {
     use Moo;
-    with "Diversion::AppRole";
+    with "Diversion::Service";
 
     use Encode;
     use IO::All;

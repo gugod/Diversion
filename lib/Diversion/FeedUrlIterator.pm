@@ -1,7 +1,7 @@
 package Diversion::FeedUrlIterator;
 use v5.18;
 use Moo;
-with 'Diversion::Iterator', 'Diversion::AppRole';
+with 'Diversion::Iterator', 'Diversion::Service';
 
 use JSON::XS;
 use Diversion::UrlArchiveIterator;
