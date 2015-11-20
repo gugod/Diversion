@@ -1,7 +1,7 @@
 package Diversion::UrlArchiveIterator;
 use v5.18;
 use Moo;
-with 'Diversion::Db', 'Diversion::Iterator';
+with 'Diversion::AppRole', 'Diversion::Iterator';
 
 use Diversion::UrlArchiver;
 

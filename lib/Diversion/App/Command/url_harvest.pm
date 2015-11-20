@@ -2,7 +2,7 @@ package Diversion::App::Command::url_harvest;
 use v5.18;
 use Diversion::App -command;
 use Moo;
-with 'Diversion::Db';
+with 'Diversion::AppRole';
 
 use List::Util qw(shuffle);
 use List::MoreUtils qw( uniq );

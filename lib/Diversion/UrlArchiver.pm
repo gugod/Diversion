@@ -1,7 +1,7 @@
 package Diversion::UrlArchiver {
     use v5.18;
     use Moo;
-    with('Diversion::Db', 'Diversion::AppRole');
+    with 'Diversion::AppRole';
 
     use HTTP::Tiny;
     use Encode;
