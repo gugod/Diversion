@@ -11,7 +11,8 @@ use Parallel::ForkManager;
 
 sub opt_spec {
     return (
-        ["workers=n", "number of worker processes.", { default => 4 }]
+        ["workers=n", "number of worker processes.", { default => 4 }],
+        ["only-same-host", "Only relative URLs"],
     )
 }
 
@@ -38,7 +39,7 @@ sub execute {
         $log->debug("[$$] CRAWL $response->{status} $u\n");
         my $links = [];
         if ($response && $response->{success}) {
-            $links = find_links($response, $u);
+            $links = find_links($response, $u, $opt->{only_same_host});
         }
         $forkman->finish(0, $links);
     }
@@ -55,12 +56,13 @@ sub execute {
 }
 
 sub find_links {
-    my ($response, $uri) = @_;
+    my ($response, $uri, $only_same_host) = @_;
     return [] unless ( ($response->{headers}{"content-type"} //"") =~ m{^ text/html }x );
 
     my $links = [];
 
     my $base_uri = URI->new($uri);
+    my $base_host = $base_uri->host;
     my $dom = Mojo::DOM->new($response->{content});
 
     my $x = $dom->find("a[href]")->grep(
@@ -71,7 +73,9 @@ sub find_links {
         sub {
             my $v = $_->attr("href");
             $v =~ s/#.*$//;
-            return URI->new_abs($v, $base_uri);
+            my $u = URI->new_abs($v, $base_uri);
+            return $u if !$only_same_host || ($u->can("host") && ($u->host eq $base_host));
+            return ();
         }
     )->grep(
         sub {
