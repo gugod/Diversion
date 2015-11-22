@@ -44,9 +44,9 @@ sub _fh_rw {
 sub _filename {
     my ($self, $digest) = @_;
     my $pre  = substr($digest,0,4);
-    my $suf = substr($digest,4);
     my $dir = File::Spec->catdir($self->root, $pre);
-    my $file = File::Spec->catfile($dir, $suf);
+    my $file = File::Spec->catfile($dir, $digest);
+    print "FILE $digest $file\n";
     return ($dir, $file);
 }
 
@@ -92,7 +92,7 @@ sub each {
     my $files = File::Next::files( $self->root );
     my $prefix_length = length($self->root);
     while ( defined ( my $file = $files->() ) ) {
-        my $digest = substr($file, $prefix_length, 4) . substr($file, $prefix_length + 5, 36);
+        my $digest = substr($file, $prefix_length + 5, 40);
         $cb->($digest);
     }
 }
