@@ -10,19 +10,22 @@ use List::MoreUtils qw(uniq);
 
 use Diversion::FeedArchiver;
 use Diversion::FeedUrlIterator;
+use Diversion::FeedArchiveIterator;
 
 use Parallel::ForkManager;
 
 sub opt_spec {
     return (
-        ["workers=n", "number of worker processes.", { default => 4 }]
+        ["workers=n", "number of worker processes.", { default => 4 }],
+        ["harvest", "Harvest new feed URLs from URL Archive"]
     )
 }
 
 sub execute {
     my ($self, $opt, $args) = @_;
 
-    my $iter = Diversion::FeedUrlIterator->new;
+    my $iter = $opt->{harvest} ? Diversion::FeedUrlIterator->new : Diversion::FeedArchiveIterator->new;
+
     my $forkman = Parallel::ForkManager->new($opt->{workers});
 
     while (my $row = $iter->next) {
