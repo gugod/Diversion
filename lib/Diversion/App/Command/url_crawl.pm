@@ -16,7 +16,6 @@ sub opt_spec {
     )
 }
 
-require Data::Dumper;
 sub execute {
     my ($self, $opt, $args) = @_;
     my $url_archiver = Diversion::UrlArchiver->new;
