@@ -3,10 +3,6 @@ use v5.18;
 use Moo;
 with 'Diversion::Iterator', 'Diversion::Service';
 
-has object_created_at => (
-    is => "ro",
-    default => sub { scalar time }
-);
 has sql_where_clause => (
     is => "ro",
     predicate => 1
@@ -14,6 +10,11 @@ has sql_where_clause => (
 
 has sql_order_clause => (
     is => "ro",
+    predicate => 1
+);
+
+has _ext_cursor => (
+    is => "rw",
     predicate => 1
 );
 

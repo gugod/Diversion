@@ -4,14 +4,14 @@ use Moo::Role;
 
 requires 'reify';
 
+has object_created_at => (
+    is => "ro",
+    default => sub { scalar time }
+);
+
 has _cursor => (
     is => "rw",
     predicate => 1,
-);
-
-has _ext_cursor => (
-    is => "rw",
-    predicate => 1
 );
 
 has reified => (
