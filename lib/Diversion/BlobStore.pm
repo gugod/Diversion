@@ -46,7 +46,6 @@ sub _filename {
     my $pre  = substr($digest,0,4);
     my $dir = File::Spec->catdir($self->root, $pre);
     my $file = File::Spec->catfile($dir, $digest);
-    print "FILE $digest $file\n";
     return ($dir, $file);
 }
 
