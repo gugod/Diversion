@@ -72,7 +72,7 @@ sub execute_balance {
         my $response = $url_archiver->get_local($uri);
         next unless $response && $response->{success};
         push @links, grep { !$url_archiver->get_local($_) } grep { my ($host) = $_ =~ m{\A https?:// ([^/]+) (?: /|$ )}x; $host; } @{find_links($response, $uri, $args)};
-        if (@links > 9999) {
+        if (@links > 999) {
             my $i = 0;
             for my $u (shuffle uniq @links) {
                 my $worker_fh = $workers[$i][1];
