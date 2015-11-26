@@ -66,32 +66,28 @@ sub execute_balance {
     );
 
     my $harvested_count = 0;
-    my @links;
+    my %links;
+    my $c = 0;
+    while ((my $row = $iter->next()) && $c++ < @$args ) {
+        my $uri = $row->{uri};
+        my $response = $url_archiver->get_local($uri);
+        next unless $response && $response->{success};
+        $links{$_} = 1 for grep { my ($host) = $_ =~ m{\A https?:// ([^/]+) (?: /|$ )}x; $_ && $host && !$url_archiver->get_local($_) } @{find_links($response, $uri, $args)};
+    }
+
     while ((my $row = $iter->next()) && ($harvested_count < $opt->{limit}) ) {
         my $uri = $row->{uri};
         my $response = $url_archiver->get_local($uri);
         next unless $response && $response->{success};
-        push @links, grep { !$url_archiver->get_local($_) } grep { my ($host) = $_ =~ m{\A https?:// ([^/]+) (?: /|$ )}x; $host; } @{find_links($response, $uri, $args)};
-        if (@links > 999) {
-            my $i = 0;
-            for my $u (shuffle uniq @links) {
-                my $worker_fh = $workers[$i][1];
-                $i = ($i + 1) % @workers;
-                print $worker_fh "$u\n";
-                $harvested_count += 1;
-            }
-            @links = ();
-        }
-    }
-
-    if (@links && ($harvested_count < $opt->{limit})) {
+        $links{$_} = 1 for grep { my ($host) = $_ =~ m{\A https?:// ([^/]+) (?: /|$ )}x; $_ && $host && !$url_archiver->get_local($_) } @{find_links($response, $uri, $args)};
         my $i = 0;
-        for my $u (uniq(@links)) {
-            my $worker_fh = $workers[$i][1];
-            $i = ($i + 1) % @workers;
+        while (($i < @workers) && (my ($u, undef) = each(%links))) {
+            my $worker_fh = $workers[$i++][1];
             print $worker_fh "$u\n";
+            $harvested_count += 1;
+            delete $links{$u};
         }
-        @links = ();
+        sleep(2) if keys %links > @workers;
     }
 
     close($_->[1]) for @workers;
