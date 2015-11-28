@@ -14,6 +14,7 @@ use Diversion::UrlArchiveIterator;
 
 sub opt_spec {
     return (
+        ["output=s", "Output file name", { default => "output.html" }],
     )
 }
 
@@ -21,7 +22,7 @@ sub execute {
     my ($self, $opt, $args) = @_;
 
     my $out_fh;
-    open $out_fh, ">:utf8", "/tmp/o.html";
+    open $out_fh, ">:utf8", $opt->{output};
     say $out_fh q{<html><head><meta charset="utf8"></head><body>};
     $self->for_each_url_with_content(
         $opt, $args,
