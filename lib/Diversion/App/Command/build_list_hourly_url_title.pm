@@ -8,9 +8,9 @@ use autodie;
 use Log::Any qw($log);
 
 use JSON;
-use Encode 'encode_utf8';
+use Encode ('encode_utf8', 'decode');
 
-use Diversion::UrlArchiveIterator;
+use Diversion::DistinctUrlIterator;
 
 sub opt_spec {
     return (
@@ -38,12 +38,11 @@ sub execute {
 
 sub for_each_url_with_content {
     my ($self, $opt, $args, $cb) = @_;
-    my $iter = Diversion::UrlArchiveIterator->new(
-        sql_order_clause => "uri, created_at DESC",
-        # sql_where_clause => ["created_at > ?", time - 3600],
+    my $iter = Diversion::DistinctUrlIterator->new(
+        sql_where_clause => ["created_at > ?", time - 3600],
     );
 
-    my $JSON = JSON->new->utf8;
+    my $JSON = JSON->new;
     my @list;
     while (my $row = $iter->next) {
         next unless $row->{uri} =~ /^https?:/;
@@ -65,7 +64,8 @@ sub for_each_url_with_content {
         next unless $res->{status} eq '200';
 
         my $o = HTML::Content::Extractor->new;
-        $o->analyze($res->{content});
+        my $content = decode("utf8", $res->{content});
+        $o->analyze($content);
         my $main_text = $o->get_main_text;
 
         if ($main_text && $main_text ne "") {

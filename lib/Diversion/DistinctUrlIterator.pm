@@ -8,9 +8,23 @@ use Diversion::UrlArchiveIterator;
 
 my $JSON = JSON::XS->new;
 
+has sql_where_clause => (
+    is => "ro",
+    predicate => 1,
+);
+
+
 has url_archive_iterator => (
     is => "ro",
-    default => sub { Diversion::UrlArchiveIterator->new( sql_order_clause => "uri, created_at DESC" ) }
+    default => sub {
+        my ($self) = @_;
+        Diversion::UrlArchiveIterator->new(
+            sql_order_clause => "uri, created_at DESC",
+            ($self->has_sql_where_clause) ? (
+                sql_where_clause => $self->sql_where_clause
+            ):()
+        )
+    }
 );
 
 sub reify {
