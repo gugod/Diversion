@@ -6,6 +6,9 @@ use File::Spec;
 use File::Path qw(make_path);
 use PerlIO::via::gzip;
 
+use IO::Compress::Gzip qw(Z_BEST_COMPRESSION);
+$PerlIO::via::gzip::COMPRESSION_LEVEL=Z_BEST_COMPRESSION;
+
 has root => (
     is => "rw",
     required => 1,
@@ -37,7 +40,7 @@ sub _fh_rw {
     my $f_gz = $f . ".gz";
     return undef if -f $f_gz || -f $f;
     make_path($path) unless -d $path;
-    open(my $fh, ">", $f) or die $!;
+    open(my $fh, ">:via(gzip)", $f_gz) or die $!;
     return $fh;
 }
 
