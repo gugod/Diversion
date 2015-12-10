@@ -11,6 +11,7 @@ use URI::Split qw(uri_split);
 sub opt_spec {
     return (
         ["aggregation=s", "Do aggregation"],
+        ["only-host=s", "Only the URL from this host"],
         ["only-content-type=s", "Only the specify content-type"],
         ["only-binary", "Only binary"],
         ["only-missing-blob", "Only the one with missing blob."],
@@ -41,6 +42,11 @@ sub execute {
                 }
                 next;
             }
+        }
+
+        if ($opt->{only_host}) {
+            my $host = (uri_split($row->{uri}))[1] // "";
+            next unless $host && $host eq $opt->{only_host};
         }
 
         next if $opt->{only_content_type} && defined($res->{headers}{"content-type"}) && index($res->{headers}{"content-type"}, $opt->{only_content_type}) < 0;
