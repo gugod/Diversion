@@ -9,7 +9,6 @@ requires 'DBI'                            => '0';
 requires 'DBD::SQLite'                    => '1.46';
 requires 'Devel::StackTrace'              => '1.30';
 requires 'Digest::SHA1'                   => '0';
-requires 'Digest::MD4'                    => '0';
 requires 'Elastijk'                       => '0.05';
 requires 'Email::Sender::Transport::SMTP' => '0';
 requires 'Email::Stuffer'                 => '0';
