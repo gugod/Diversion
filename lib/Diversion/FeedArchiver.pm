@@ -36,7 +36,7 @@ package Diversion::FeedArchiver {
                 $dbh->do(q{ INSERT INTO feed_archive(uri, created_at, sha1_digest) VALUES (?,?,?)}, {}, $url, 0+time, $digest);
                 for my $entry (@{ $feed->{entry} }) {
                     my $entry_json = $JSON->encode($entry);
-                    $dbh->do(q{ INSERT OR IGNORE INTO feed_entries(uri, created_at, entry_json) VALUES (?,?,?) }, {}, $entry->{link}, 0+time, $entry_json);
+                    $dbh->do(q{ INSERT IGNORE INTO feed_entries(uri, created_at, entry_json) VALUES (?,?,?) }, {}, $entry->{link}, 0+time, $entry_json);
                 }
             }
         );
