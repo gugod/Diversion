@@ -1,42 +1,26 @@
 package Diversion::Service;
 use Moo::Role;
 use Diversion::BlobStore;
-
+use Diversion::App;
 use DBI;
 
 has blob_store => (
     is => "ro",
     default => sub {
-        return Diversion::BlobStore->new(
-            root => "$ENV{HOME}/var/Diversion/blob_store/"
-        );
-    }
-);
-
-has db_config => (
-    is => "ro",
-    default => sub {
-        return {
-            content => [
-                "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/db/content.sqlite3",
-                undef, undef, { AutoCommit => 1 }
-            ],
-            feed => [
-                "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/db/feed.sqlite3",
-                undef, undef, { AutoCommit => 1 }
-            ],
-            url => [
-                "dbi:SQLite:dbname=$ENV{HOME}/var/Diversion/db/url.sqlite3",
-                undef, undef, { AutoCommit => 1 }
-            ]
-        };
+        my $root = Diversion::App->config->{blob_store}{root} // "$ENV{HOME}/var/Diversion/blob_store/";
+        return Diversion::BlobStore->new(root => $root);
     }
 );
 
 sub db_open {
     my ($self, $db_name, $cb) = @_;
-    my $config = $self->db_config->{$db_name} || die;
-    my $dbh = DBI->connect( @$config );
+    my $conf = Diversion::App->config->{database}{$db_name} || die "";
+    my $dbh = DBI->connect(
+        $conf->{dsn},
+        $conf->{username},
+        $conf->{password},
+        { AutoCommit => 1 }
+    );
     if ($cb) {
         my $ret = $cb->($dbh);
         $dbh->disconnect;
