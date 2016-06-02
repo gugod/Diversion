@@ -1,4 +1,5 @@
 package Diversion::App::Command::url_refresh;
+# ABSTRACT: re-download content of urls.
 use v5.18;
 use Diversion::App -command;
 use Moo;
