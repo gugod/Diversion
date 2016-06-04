@@ -1,4 +1,5 @@
 package Diversion::App::Command::feed_refresh;
+# ABSTRACT: Refresh (re-download) feed URLs
 use v5.18;
 use Diversion::App -command;
 use Moo;

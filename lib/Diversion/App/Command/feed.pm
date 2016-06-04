@@ -1,4 +1,5 @@
 package Diversion::App::Command::feed;
+# ABSTRACT: List feed URLs
 use v5.18;
 use Moo;
 with 'Diversion::Service';
