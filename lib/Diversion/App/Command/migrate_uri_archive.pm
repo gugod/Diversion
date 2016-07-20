@@ -69,10 +69,10 @@ sub execute {
 __END__
 
 CREATE TABLE uri_archive_v2 (
-    'uri'   varchar(1024) NOT NULL,
-    'created_at' int NOT NULL,
-    'updated_at' int NOT NULL,
-    'response_sha1_digest' char(40) NOT NULL,
-    'content_sha1_digest' char(40) NOT NULL,
+    `uri`   varchar(900) NOT NULL,
+    `created_at` int NOT NULL,
+    `updated_at` int NOT NULL,
+    `response_sha1_digest` char(40) NOT NULL,
+    `content_sha1_digest` char(40) NOT NULL,
     PRIMARY KEY (`uri`, `content_sha1_digest`)
 );
