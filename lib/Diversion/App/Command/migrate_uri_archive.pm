@@ -25,7 +25,8 @@ sub execute {
             my $sth_update_v2 = $dbh->prepare(q{ UPDATE uri_archive_v2 SET updated_at = ?, response_sha1_digest = ? WHERE uri = ? AND content_sha1_digest = ? });
             my $sth_check_v2 = $dbh->prepare(q{ SELECT 1 FROM uri_archive_v2 WHERE uri = ? AND content_sha1_digest = ? });
 
-            my $sth_all_uri_archives = $dbh->prepare(q{ SELECT uri,created_at,sha1_digest FROM uri_archive });
+            my ($min_timestamp_to_start_processing) = $dbh->selectrow_array(q{ SELECT max(updated_at) FROM uri_archive_v2 });
+            my $sth_all_uri_archives = $dbh->prepare(q{ SELECT uri,created_at,sha1_digest FROM uri_archive WHERE created_at >= ? }, undef, $min_timestamp_to_start_processing);
             $sth_all_uri_archives->execute;
             while (my $row = $sth_all_uri_archives->fetchrow_arrayref()) {
                 my $blob = $blob_store->get( $row->[2] );
