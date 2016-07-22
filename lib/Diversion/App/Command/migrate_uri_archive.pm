@@ -33,6 +33,8 @@ sub execute {
 
                 my $http_tiny_response = $json->decode($blob);
                 my $content = delete $http_tiny_response->{content};
+                next unless defined($content);
+
                 my $content_digest = $blob_store->put($content);
                 my $blob2 = $json->encode($http_tiny_response);
                 my $blob2_digest = $blob_store->put( $blob2 );
