@@ -21,7 +21,7 @@ sub execute {
         $self->blob_store->each(
             sub {
                 my ($digest) = @_;
-                my $x = $dbh_url->selectcol_arrayref(q{ SELECT 1 from uri_archive WHERE sha1_digest = ? LIMIT 1}, {}, $digest);
+                my $x = $dbh_url->selectcol_arrayref(q{ SELECT 1 from uri_archive WHERE response_sha1_digest = ? OR content_sha1_digest = ? LIMIT 1}, {}, $digest, $digest);
                 return if $x->[0];
 
                 my $y = $dbh_feed->selectcol_arrayref(q{ SELECT 1 from feed_archive WHERE sha1_digest = ? LIMIT 1}, {}, $digest);
