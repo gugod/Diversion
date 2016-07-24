@@ -67,6 +67,7 @@ package Diversion::UrlArchiver {
             }
         );
 
+        $response->{content} = $response_content;
         return $response;
     }
 
