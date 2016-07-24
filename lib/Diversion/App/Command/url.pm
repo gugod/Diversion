@@ -32,14 +32,14 @@ sub execute {
     while (my $row = $iter->next) {
         my $res;
         if ($should_load_res) {
-            my $blob = $self->blob_store->get($row->{sha1_digest});
+            my $blob = $self->blob_store->get($row->{response_sha1_digest});
             if (defined($blob)) {
                 $res = $JSON->decode( $blob );
                 next if $opt->{only_missing_blob};
             } elsif ($opt->{only_missing_blob}) {
-                say( $row->{sha1_digest} . "\t" . $row->{uri} );
+                say( $row->{response_sha1_digest} . "\t" . $row->{uri} );
                 if ($opt->{delete}) {
-                    $self->delete_blob_and_uri_archive_reference($row->{sha1_digest});
+                    $self->delete_blob_and_uri_archive_reference($row->{response_sha1_digest});
                 }
                 next;
             }
@@ -70,7 +70,7 @@ sub execute {
                 say $last;
             }
             if ($opt->{delete}) {
-                $self->delete_blob_and_uri_archive_reference($row->{sha1_digest});
+                $self->delete_blob_and_uri_archive_reference($row->{response_sha1_digest});
             }
         }
     }
@@ -90,7 +90,7 @@ sub delete_blob_and_uri_archive_reference {
     $self->db_open(
         url => sub {
             my ($dbh) = @_;
-            $dbh->do("DELETE FROM uri_archive WHERE sha1_digest = ?", {}, $sha1_digest);
+            $dbh->do("DELETE FROM uri_archive WHERE response_sha1_digest = ?", {}, $sha1_digest);
         }
     );
 }
