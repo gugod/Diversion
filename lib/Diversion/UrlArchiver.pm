@@ -15,19 +15,23 @@ package Diversion::UrlArchiver {
     sub get_local {
         my ($self, $url) = @_;
 
-        my $response_sha1_digest = $self->db_open(
+        my $row = $self->db_open(
             "url",
             sub {
                 my ($dbh) = @_;
-                my ($v) = @{$dbh->selectcol_arrayref(q{ SELECT response_sha1_digest FROM uri_archive WHERE uri = ? ORDER BY updated_at DESC LIMIT 1},{}, $url)};
-                return $v;
+                my @row = $dbh->selectrow_array(q{ SELECT response_sha1_digest,content_sha1_digest FROM uri_archive WHERE uri = ? ORDER BY updated_at DESC LIMIT 1}, {Slice => {}}, $url);
+                return @row ? \@row : ();
             }
         );
-        return undef unless defined $response_sha1_digest;
+        return undef unless $row;
 
         my $blob_store = $self->blob_store;
-        if (my $response = $blob_store->get($response_sha1_digest)) {
-            return $JSON->decode($response);
+
+        if ((my $response = $blob_store->get($row->{response_sha1_digest})) &&
+            (my $response_content = $blob_store->get($row->{content_sha1_digest}))) {
+            my $r = $JSON->decode($response);
+            $r->{content} = $response_content;
+            return $r;
         }
         return undef;
     }
