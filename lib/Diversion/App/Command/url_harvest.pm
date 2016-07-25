@@ -63,7 +63,7 @@ sub execute_balance {
 
     my $iter = Diversion::UrlArchiveIterator->new(
         sql_where_clause => \@where_clause,
-        sql_order_clause => "sha1_digest ASC",
+        sql_order_clause => "response_sha1_digest ASC",
     );
 
     my $harvested_count = 0;
