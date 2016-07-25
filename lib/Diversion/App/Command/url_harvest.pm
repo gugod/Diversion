@@ -55,7 +55,7 @@ sub execute_balance {
     };
     my @workers = map { fork_worker($worker_sub) } 1 .. $opt->{workers};
 
-    my @where_clause = (" created_at > ? ",  (time - $opt->{ago}) );
+    my @where_clause = (" updated_at > ? ",  (time - $opt->{ago}) );
     if (@$args) {
         $where_clause[0] .= " AND (" . join(" OR ", ("instr(uri,?)")x@$args) . ")";
         push @where_clause, @$args;
@@ -63,18 +63,12 @@ sub execute_balance {
 
     my $iter = Diversion::UrlArchiveIterator->new(
         sql_where_clause => \@where_clause,
-        sql_order_clause => "response_sha1_digest ASC",
+        sql_order_clause => "updated_at ASC",
     );
 
     my $harvested_count = 0;
     my %links;
     my $c = 0;
-    while ((my $row = $iter->next()) && $c++ < @$args ) {
-        my $uri = $row->{uri};
-        my $response = $url_archiver->get_local($uri);
-        next unless $response && $response->{success};
-        $links{$_} = 1 for grep { my ($host) = $_ =~ m{\A https?:// ([^/]+) (?: /|$ )}x; $_ && $host && !$url_archiver->get_local($_) } @{find_links($response, $uri, $args)};
-    }
 
     while ((my $row = $iter->next()) && ($harvested_count < $opt->{limit}) ) {
         my $uri = $row->{uri};
