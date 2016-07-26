@@ -21,11 +21,11 @@ sub reify {
     while ((@$rows < 1) && (my $row = $iter->next)) {
         next unless $row->{uri} =~ /^https?:/;
         next if $last->{uri} eq $row->{uri};
-        if (my $blob = $self->blob_store->get($last->{sha1_digest})) {
+        if (my $blob = $self->blob_store->get($last->{response_sha1_digest})) {
             my $res = $JSON->decode( $blob );
             push(@$rows, $last) if defined($res->{headers}{"content-type"}) && $res->{headers}{"content-type"} =~ /atom|rss/;
         } else {
-            warn "Blob is missing: $last->{sha1_digest} $last->{uri}";
+            warn "Blob is missing: $last->{response_sha1_digest} $last->{uri}";
         }
         $last = $row;
     }
