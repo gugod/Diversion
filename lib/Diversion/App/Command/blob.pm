@@ -1,4 +1,5 @@
 package Diversion::App::Command::blob;
+#ABSTRACT: List blobs
 use v5.18;
 
 use Moo;

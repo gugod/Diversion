@@ -1,4 +1,5 @@
 package Diversion::App::Command::archive_feed_entry;
+#ABSTRACT: Archive all entries from all discovered feeds.
 use v5.18;
 use Diversion::App -command;
 
