@@ -47,12 +47,20 @@ sub execute {
         $o->analyze($res_content);
         my $main_text = $o->get_main_text;
 
-        $blob = $JSON->encode({
-            main_text => $main_text,
-            extractor => "HTML::Content::Extractor"
-        });
-        my $digest = $self->blob_store->put($blob);
+        $blob = undef;
+        eval {
+            $blob = $JSON->encode({
+                main_text => $main_text,
+                extractor => "HTML::Content::Extractor"
+            });
+            1;
+        } or do {
+            my $error = $@ || "(zombie error)";
+            say STDERR "content_extract: ERROR delaing with $row->{uri}: $error";
+        };
+        next unless defined($blob);
 
+        my $digest = $self->blob_store->put($blob);
         $dbh_content->do(
             q{ INSERT INTO content (`uri`, `uri_content_sha1_digest`, `sha1_digest`,`created_at`) VALUES (?,?,?,?) },
             {},
