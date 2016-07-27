@@ -35,10 +35,10 @@ sub reify {
     while ((@$rows < 1) && (my $row = $iter->next)) {
         next unless $row->{uri} =~ /^https?:/;
         next if $last->{uri} eq $row->{uri};
-        if ($self->blob_store->exists($last->{sha1_digest})) {
+        if ($self->blob_store->exists($last->{response_sha1_digest})) {
             push(@$rows, $last);
         } else {
-            warn "Blob is missing: $last->{sha1_digest} $last->{uri}";
+            warn "Blob is missing: $last->{response_sha1_digest} $last->{uri}";
         }
         $last = $row;
     }
