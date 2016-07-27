@@ -28,7 +28,7 @@ sub reify {
     my $rows = $self->db_open(
         url => sub {
             my ($dbh) = @_;
-            my $SELECT_CLAUSE = "SELECT uri,response_sha1_digest,created_at FROM uri_archive";
+            my $SELECT_CLAUSE = "SELECT uri,response_sha1_digest,content_sha1_digest,created_at FROM uri_archive";
             my $ORDER_CLAUSE = "ORDER BY created_at DESC";
             my ($WHERE_CLAUSE, @where_values) = ("created_at < ?", $self->object_created_at);
 

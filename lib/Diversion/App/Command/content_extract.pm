@@ -24,36 +24,41 @@ sub opt_spec {
 
 sub execute {
     my ($self, $opt, $args) = @_;
-    my $JSON = JSON->new;
+    my $JSON = JSON->new->utf8->canonical;
 
     my $dbh_content = $self->db_open("content");
-    my $iter = Diversion::UrlArchiveIterator->new;
+    my $iter = Diversion::UrlArchiveIterator->new(
+        sql_where_clause => ["created_at >= ?", time - $opt->{ago} ],
+    );
     while (my $row = $iter->next) {
-        my $blob = $self->blob_store->get($row->{sha1_digest}) or next;
+        my $blob = $self->blob_store->get($row->{response_sha1_digest}) or next;
         my $res;
         eval {
             $res = $JSON->decode( $blob );
             1;
         } or do {
-            warn "Fail to decode json for of blob $row->{sha1_digest}\n";
+            warn "Fail to decode json for of blob $row->{response_sha1_digest}\n";
             next;
         };
-
-        next unless $res->{headers} && $res->{headers}{"content-type"};
-        next unless !ref($res->{content}) && index($res->{headers}{"content-type"}, "text/html") >= 0;
-
-        next if $dbh_content->selectrow_arrayref(q{ SELECT 1 FROM content WHERE uri_response_sha1_digest = ? }, {}, $row->{sha1_digest});
-
+        next unless $res->{headers} && $res->{headers}{"content-type"} && index($res->{headers}{"content-type"}, "text/html") >= 0;
+        next if $dbh_content->selectrow_arrayref(q{ SELECT 1 FROM content WHERE uri_content_sha1_digest = ? }, {}, $row->{content_sha1_digest});
+        my $res_content = $self->blob_store->get($row->{content_sha1_digest}) or next;
         my $o = HTML::Content::Extractor->new;
-        $o->analyze($res->{content});
+        $o->analyze($res_content);
         my $main_text = $o->get_main_text;
 
-        my $digest = $self->blob_store->put($JSON->utf8->encode({
+        $blob = $JSON->encode({
             main_text => $main_text,
             extractor => "HTML::Content::Extractor"
-        }));
+        });
+        my $digest = $self->blob_store->put($blob);
 
-        $dbh_content->do(q{ INSERT INTO content (`uri`, `uri_response_sha1_digest`, `sha1_digest`,`created_at`) VALUES (?,?,?,?) }, {}, $row->{uri}, $row->{sha1_digest}, $digest, scalar(time));
+        $dbh_content->do(
+            q{ INSERT INTO content (`uri`, `uri_content_sha1_digest`, `sha1_digest`,`created_at`) VALUES (?,?,?,?) },
+            {},
+            $row->{uri}, $row->{content_sha1_digest}, $digest, scalar(time)
+        );
+        say "content_extract DONE: $row->{uri}";
     }
     $dbh_content->disconnect;
 }

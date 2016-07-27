@@ -4,11 +4,11 @@
 ** content
 
 CREATE TABLE content (
-    `uri_response_sha1_digest` char(40) NOT NULL,
+    `uri_content_sha1_digest` char(40) NOT NULL,
     `uri`   varchar(900) NOT NULL,
     `sha1_digest` char(40) NOT NULL,
     `created_at` int NOT NULL,
-    PRIMARY KEY (`uri_response_sha1_digest`, `uri`)
+    PRIMARY KEY (`uri_content_sha1_digest`, `uri`)
 );
 
 ** uri_archive
