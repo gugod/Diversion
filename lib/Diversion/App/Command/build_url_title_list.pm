@@ -1,4 +1,6 @@
-package Diversion::App::Command::build_list_hourly_url_title;
+package Diversion::App::Command::build_url_title_list;
+#ABSTRACT: Render a list of URLs to html.
+
 use v5.18;
 use Diversion::App -command;
 use Moo;
@@ -14,6 +16,7 @@ use Diversion::DistinctUrlIterator;
 
 sub opt_spec {
     return (
+        ["ago=n", "Scan back from this second ago.", { default => 3600 }],
         ["output=s", "Output file name", { default => "output.html" }],
     )
 }
@@ -39,7 +42,7 @@ sub execute {
 sub for_each_url_with_content {
     my ($self, $opt, $args, $cb) = @_;
     my $iter = Diversion::DistinctUrlIterator->new(
-        sql_where_clause => ["created_at > ?", time - 3600],
+        sql_where_clause => ["created_at > ?", time - $opt->{ago}],
     );
 
     my $JSON = JSON->new;
