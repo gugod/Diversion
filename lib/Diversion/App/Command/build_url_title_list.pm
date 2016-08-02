@@ -49,25 +49,35 @@ sub for_each_url_with_content {
     my @list;
     while (my $row = $iter->next) {
         next unless $row->{uri} =~ /^https?:/;
-        unless ($self->blob_store->exists($row->{sha1_digest})) {
-            warn "Blob is missing: $row->{sha1_digest} $row->{uri}";
+        unless ($self->blob_store->exists($row->{response_sha1_digest})) {
+            warn "Blob is missing: $row->{response_sha1_digest} $row->{uri}";
         }
         
-        my $blob = $self->blob_store->get($row->{sha1_digest});
-        my $res;
+        my $blob = $self->blob_store->get($row->{response_sha1_digest});
 
+        my $res;
         eval {
             $res = $JSON->decode($blob);
             1;
         } or do {
-            warn "JSON Decode failed. blob = $row->{sha1_digest}: $@";
+            warn "JSON Decode failed. blob = $row->{response_sha1_digest}: $@";
             next;
         };
 
-        next unless $res->{status} eq '200';
+        next unless (($res->{status} eq '200') && ( ($res->{headers}{"content-type"} //"") =~ m{^ text/html }x ));
+
+        my $res_content;
+        eval {
+            $res_content = $self->blob_store->get($row->{content_sha1_digest});
+            1;
+        } or do {
+            warn "JSON Decode failed. blob = $row->{content_sha1_digest}: $@";
+            next;
+        };
+        next unless defined($res_content);
 
         my $o = HTML::Content::Extractor->new;
-        my $content = decode("utf8", $res->{content});
+        my $content = decode("utf8", $res_content);
         $o->analyze($content);
         my $main_text = $o->get_main_text;
 
