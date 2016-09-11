@@ -32,12 +32,7 @@ package Diversion::FeedArchiver {
 
                 my ($exists) = @{ $dbh->selectcol_arrayref(q{ SELECT 1 FROM feed_archive WHERE uri = ? AND sha1_digest = ? LIMIT 1}) };
                 return if $exists;
-
                 $dbh->do(q{ INSERT INTO feed_archive(uri, created_at, sha1_digest) VALUES (?,?,?)}, {}, $url, 0+time, $digest);
-                for my $entry (@{ $feed->{entry} }) {
-                    my $entry_json = $JSON->encode($entry);
-                    $dbh->do(q{ INSERT IGNORE INTO feed_entries(uri, created_at, entry_json) VALUES (?,?,?) }, {}, $entry->{link}, 0+time, $entry_json);
-                }
             }
         );
     }

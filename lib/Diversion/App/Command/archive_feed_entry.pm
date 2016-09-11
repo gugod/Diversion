@@ -13,6 +13,7 @@ use Log::Any qw($log);
 use Parallel::ForkManager;
 use Diversion::UrlArchiver;
 use Diversion::FeedArchiver;
+use JSON;
 
 sub opt_spec {
     return (
@@ -27,17 +28,28 @@ sub execute {
     my $rows = $self->db_open(
         feed => sub {
             my ($dbh) = @_;
-            return $dbh->selectall_arrayref('SELECT uri FROM feed_entries WHERE uri LIKE "http%" AND created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
+            return $dbh->selectall_arrayref('SELECT uri,sha1_digest FROM feed_archive WHERE uri LIKE "http%" AND created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
         }
     );
 
+    my $JSON = JSON->new->utf8;
     my $forkman = Parallel::ForkManager->new( $opt->{workers} );
     my $o = Diversion::UrlArchiver->new;
+    my %urls;
     for my $row (shuffle @$rows) {
-        unless ($o->get_local($row->{uri})) {
+        my $feed = $JSON->decode( $self->blob_store->get( $row->{sha1_digest} ) );
+        for my $entry (@{$feed->{entry}}) {
+            my $uri = $entry->{link};
+            next unless $uri && $uri =~ /^https?:/;
+            $urls{$uri} = 1;
+        }
+    }
+    for my $uri (keys %urls) {
+        $log->info("[$$] STORE $uri\n");
+        unless ($o->get_local($uri)) {
             $forkman->start and next;
-            $o->get($row->{uri});
-            $log->info("[$$] STORE $row->{uri}\n");
+            $o->get($uri);
+            $log->info("[$$] STORE $uri\n");
             $forkman->finish;
         }
     }
