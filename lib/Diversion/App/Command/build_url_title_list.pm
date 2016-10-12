@@ -26,7 +26,7 @@ sub execute {
 
     my $out_fh;
     open $out_fh, ">:utf8", $opt->{output};
-    say $out_fh q{<html><head><meta charset="utf8"></head><body>};
+    say $out_fh q{<html><head><meta charset="utf-8"></head><body>};
     $self->for_each_url_with_content(
         $opt, $args,
         sub {
