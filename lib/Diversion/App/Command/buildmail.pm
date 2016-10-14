@@ -16,6 +16,7 @@ use File::ShareDir;
 use Log::Any qw($log);
 
 use Diversion::FeedArchiver;
+use Diversion::FeedArchiveIterator;
 
 sub opt_spec {
     return (
@@ -23,24 +24,29 @@ sub opt_spec {
     )
 }
 
+sub is_blank {
+    my $str = $_[0];
+    return !defined($str) || $str =~ m/^\s*$/;
+}
+
 sub execute {
     my ($self, $opt, $args) = @_;
 
-    my $feed_archiver = Diversion::FeedArchiver->new;
-    my $blob_store = $feed_archiver->blob_store;
-
-    my $rows = $self->db_open(
-        feed => sub {
-            my ($dbh) = @_;
-            $dbh->selectall_arrayref('SELECT uri, created_at, entry_json FROM feed_entries WHERE created_at > ?', {Slice=>{}}, (time - $opt->{ago}));
-        }
-    );
-
     my $JSON = JSON::PP->new->utf8;
+
+    my $blob_store = $self->blob_store;
+    my $iter = Diversion::FeedArchiveIterator->new;
+
+    my %seen;
     my $tmpl_data = {};
-    for my $row (@$rows) {
-        my $entry = $JSON->decode($row->{entry_json});
-        push @{ $tmpl_data->{entries} }, $entry;
+    while (my $row = $iter->next()) {
+	next unless $row->{uri} && $row->{sha1_digest};
+	my $blob = $blob_store->get($row->{sha1_digest});
+	my $data = $JSON->decode($blob);
+	for my $entry (@{$data->{entry}}) {
+	    next if !$entry->{link} || is_blank($entry->{title}) || $seen{$entry->{link}}++;
+	    push @{ $tmpl_data->{entries} }, $entry;
+	}
     }
 
     my $html_body = build_html_mail($tmpl_data);
@@ -51,7 +57,7 @@ sub execute {
         $l[1]+=1;
         my $ts = sprintf("%4d%02d%02d%02d%02d",@l);
 
-        my $output_dir = $self->app->config->{output}{directory} || "/tmp";
+        my $output_dir = Diversion::App->config->{output}{directory} || "/tmp";
         io->catfile($output_dir, "diversion-mail-$ts.html")->utf8->print($html_body);
     }
 }
@@ -60,15 +66,15 @@ sub build_html_mail {
     my $tmpl_data = shift;
 
     my $fmt = DateTime::Format::RSS->new;
-    my $max_title_length = max( map { length($_->{title}) } @{ $tmpl_data->{entries} } );
-    my $max_description_length = max( map { length($_->{description}) } @{ $tmpl_data->{entries} } );
+    my $max_title_length = max(1, map { length($_->{title}) } @{ $tmpl_data->{entries} } );
+    my $max_description_length = max(1, map { length($_->{description}) } @{ $tmpl_data->{entries} } );
 
     $tmpl_data->{entries} = [ rev_nsort_by {
         my $dt = $_->{pubDate} ? $fmt->parse_datetime($_->{pubDate}) : undef;
         ($dt ? $dt->epoch : 1000)
         + ( ($_->{media_content}   ? 1 : 0) + ($_->{media_thumbnail} ? 1 : 0) )
-        + ( length($_->{description_length}) / $max_description_length )
-        + ( length($_->{title}) / $max_title_length )
+        + ( length($_->{description} // '') / $max_description_length )
+        + ( length($_->{title} // '') / $max_title_length )
     } grep { defined($_->{link}) } @{$tmpl_data->{entries}} ];
 
     for my $x (@{$tmpl_data->{entries}}) {
