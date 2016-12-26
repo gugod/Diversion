@@ -3,16 +3,12 @@ use v5.18;
 use Moo;
 with 'Diversion::Iterator', 'Diversion::Service';
 
-use JSON::XS;
 use Diversion::UrlArchiveIterator;
-
-my $JSON = JSON::XS->new;
 
 has sql_where_clause => (
     is => "ro",
     predicate => 1,
 );
-
 
 has url_archive_iterator => (
     is => "ro",
