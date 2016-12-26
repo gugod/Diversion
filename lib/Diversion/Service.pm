@@ -14,7 +14,7 @@ has blob_store => (
 
 sub db_open {
     my ($self, $db_name, $cb) = @_;
-    my $conf = Diversion::App->config->{database}{$db_name} || die "";
+    my $conf = Diversion::App->config->{database}{$db_name} || die "No config for $db_name";
     my $dbh = DBI->connect(
         $conf->{dsn},
         $conf->{username},
