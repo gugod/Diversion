@@ -25,7 +25,7 @@ sub reify {
         feed => sub {
             my ($dbh) = @_;
             my $SELECT_CLAUSE = "SELECT uri,sha1_digest,created_at FROM feed_archive";
-            my $ORDER_CLAUSE = "ORDER BY created_at DESC";
+            my $ORDER_CLAUSE = "";
             my ($WHERE_CLAUSE, @where_values) = ("created_at < ?", $self->object_created_at);
 
             if ($self->has_sql_order_clause) {
