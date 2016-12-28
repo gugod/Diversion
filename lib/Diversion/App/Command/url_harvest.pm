@@ -11,6 +11,8 @@ use IO::Handle;
 use Log::Any qw($log);
 use URI;
 use Mojo::DOM;
+use DateTime;
+use DateTime::Format::MySQL;
 
 use Diversion::UrlArchiver;
 use Diversion::UrlArchiveIterator;
@@ -55,7 +57,8 @@ sub execute_balance {
     };
     my @workers = map { fork_worker($worker_sub) } 1 .. $opt->{workers};
 
-    my @where_clause = (" updated_at > ? ",  (time - $opt->{ago}) );
+    my $x = DateTime::Format::MySQL->format_datetime( DateTime->from_epoch( epoch => (time - $opt->{ago}) ) );
+    my @where_clause = (" updated_at > ? ",  $x );
     if (@$args) {
         $where_clause[0] .= " AND (" . join(" OR ", ("instr(uri,?)")x@$args) . ")";
         push @where_clause, @$args;

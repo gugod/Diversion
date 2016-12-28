@@ -4,6 +4,8 @@ use Moo;
 with 'Diversion::Service', 'Diversion::Iterator';
 
 use Diversion::UrlArchiver;
+use DateTime;
+use DateTime::Format::MySQL;
 
 has sql_where_clause => (
     is => "ro",
@@ -30,7 +32,9 @@ sub reify {
             my ($dbh) = @_;
             my $SELECT_CLAUSE = "SELECT uri,response_sha1_digest,content_sha1_digest,created_at FROM uri_archive";
             my $ORDER_CLAUSE = "";
-            my ($WHERE_CLAUSE, @where_values) = ("created_at < ?", $self->object_created_at);
+
+	    my $x = DateTime::Format::MySQL->format_datetime( DateTime->from_epoch( epoch => $self->object_created_at ) );
+            my ($WHERE_CLAUSE, @where_values) = ("created_at < ?", $x);
 
             if ($self->has_sql_order_clause) {
                 $ORDER_CLAUSE = "ORDER BY " . $self->sql_order_clause;

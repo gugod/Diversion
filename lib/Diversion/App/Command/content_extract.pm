@@ -10,6 +10,8 @@ use JSON;
 
 use Diversion::UrlArchiveIterator;
 
+use DateTime;
+use DateTime::Format::MySQL;
 use HTML::Content::Extractor;
 use HTML::ExtractMain;
 use Mojo::DOM;
@@ -26,9 +28,10 @@ sub execute {
     my ($self, $opt, $args) = @_;
     my $JSON = JSON->new->utf8->canonical;
 
+    my $x = DateTime::Format::MySQL->format_datetime( DateTime->from_epoch( epoch => (time - $opt->{ago}) ) );
     my $dbh_content = $self->db_open("content");
     my $iter = Diversion::UrlArchiveIterator->new(
-        sql_where_clause => ["created_at >= ?", time - $opt->{ago} ],
+        sql_where_clause => ["created_at >= ?", $x ],
     );
     while (my $row = $iter->next) {
         my $blob = $self->blob_store->get($row->{response_sha1_digest}) or next;
@@ -61,10 +64,12 @@ sub execute {
         next unless defined($blob);
 
         my $digest = $self->blob_store->put($blob);
+
+	my $x = DateTime::Format::MySQL->format_datetime( DateTime->from_epoch( epoch => scalar(time) ) );
         $dbh_content->do(
             q{ INSERT INTO content (`uri`, `uri_content_sha1_digest`, `sha1_digest`,`created_at`) VALUES (?,?,?,?) },
             {},
-            $row->{uri}, $row->{content_sha1_digest}, $digest, scalar(time)
+            $row->{uri}, $row->{content_sha1_digest}, $digest, $x
         );
         say "content_extract DONE: $row->{uri}";
     }

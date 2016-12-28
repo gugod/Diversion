@@ -41,8 +41,10 @@ sub execute {
 
 sub for_each_url_with_content {
     my ($self, $opt, $args, $cb) = @_;
+
+    my $x = DateTime::Format::MySQL->format_datetime( DateTime->from_epoch( epoch => (time - $opt->{ago}) ) );
     my $iter = Diversion::DistinctUrlIterator->new(
-        sql_where_clause => ["created_at > ?", time - $opt->{ago}],
+        sql_where_clause => ["created_at > ?", $x],
     );
 
     my $JSON = JSON->new;

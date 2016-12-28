@@ -7,6 +7,8 @@ package Diversion::UrlArchiver {
     use Encode;
     use JSON;
     use DBI;
+    use DateTime;
+    use DateTime::Format::MySQL;
     use Digest::SHA1 'sha1_hex';
     use Data::Binary qw(is_binary);
 
@@ -51,7 +53,7 @@ package Diversion::UrlArchiver {
                 my ($dbh) = @_;
                 my $sth_check = $dbh->prepare(q{ SELECT 1 FROM uri_archive WHERE uri = ? AND content_sha1_digest = ? LIMIT 1});
                 $sth_check->execute($url, $response_content_digest);
-                my $now = 0+time;
+                my $now = DateTime::Format::MySQL->format_datetime( DateTime->from_epoch( epoch => scalar time ) );
                 if ($sth_check->fetchrow_array) {
                     $dbh->do(
                         q{ UPDATE uri_archive SET updated_at = ? WHERE uri = ? AND content_sha1_digest = ? },
