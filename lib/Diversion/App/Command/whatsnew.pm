@@ -18,7 +18,7 @@ sub execute {
     my $x = DateTime::Format::MySQL->format_datetime( DateTime->from_epoch( epoch => (time - $opt->{ago}) ) );
     my $iter = Diversion::UrlArchiveIterator->new(
 	sql_where_clause => [
-	    "created_at > ?", $x
+	    "created_at = updated_at AND created_at > ?", $x
 	]
     );
     while (my $row = $iter->next) {
