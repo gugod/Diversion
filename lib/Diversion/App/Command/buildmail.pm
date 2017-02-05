@@ -45,6 +45,11 @@ sub execute {
 	my $data = $JSON->decode($blob);
 	for my $entry (@{$data->{entry}}) {
 	    next if !$entry->{link} || is_blank($entry->{title}) || $seen{$entry->{link}}++;
+	    if ($entry->{description} && length($entry->{description}) > 140) {
+		$entry->{description_short} = substr($entry->{description}, 0, 137) . "...";
+	    }
+	    $entry->{description} //= "";
+	    $entry->{description_short} //= "";
 	    push @{ $tmpl_data->{entries} }, $entry;
 	}
     }
