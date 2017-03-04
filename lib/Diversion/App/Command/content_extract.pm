@@ -50,6 +50,8 @@ sub execute {
         $o->analyze($res_content);
         my $main_text = $o->get_main_text;
 
+	next unless $main_text;
+
         $blob = undef;
         eval {
             $blob = $JSON->encode({
