@@ -60,8 +60,12 @@ sub execute {
 	    }
 	    
 	    if ($entry->{description} && length($entry->{description}) > 140) {
-		$entry->{description_short} = substr($entry->{description} =~ s/\p{Space}+/ /gr, 0, 137) . "...";
-		$entry->{description_short} = substr($entry->{description}, 0, 137) . "...";
+		my $txt = $entry->{description};
+		$txt =~ s/\p{Space}+/ /g;
+		$txt = substr($txt, 0, 140) . "...";
+		$txt = wrap("  ", "", $txt);
+
+		$entry->{description_short}  = $txt;
 	    }
 	    $entry->{description} //= "";
 	    $entry->{description_short} //= "";
