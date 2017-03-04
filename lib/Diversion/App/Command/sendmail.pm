@@ -9,39 +9,66 @@ use Email::Sender::Transport::SMTP;
 
 use Log::Any qw($log);
 
-sub execute {
-    my ($self) = @_;
-
-    my $output_dir = $self->app->config->{output}{directory} || "/tmp";
-    my @emails = io->dir($output_dir)->glob("diversion-mail-*.html");
-
-    return 0 unless @emails;
-
-    my @latest = ($emails[0]->mtime, $emails[0]);
-
-    for (my $i = 1; $i < $#emails; $i++) {
-        my $t = $emails[$i]->mtime;
-        if ($t > $latest[0]) {
-            $latest[0] = $t;
-            $latest[1] = $emails[$i];
-        }
-    }
-
-    send_feed_mail($self->app->config, scalar $latest[1]->utf8->slurp);
+sub opt_spec {
+    return (
+        ["text-only", "Only the text format"],
+        ["html-only", "Only the html format"],
+        ["subject=s", "The subject line."],
+        ["to=s", "The target email to send to"],
+	["n", "Dry-run"],
+    )
 }
 
-sub send_feed_mail {
-    my ($config, $mail_body) = @_;
+sub execute {
+    my ($self, $opt) = @_;
+
+    my $config = $self->app->config;
+    my $output_dir = $self->app->config->{output}{directory} || "/tmp";
+
+    my ($mail_text, $mail_html);
+    $mail_html = take_newest_file_by_name( io->dir($output_dir)->glob("diversion-mail-*.html") ) unless $opt->{text_only};
+    $mail_text = take_newest_file_by_name( io->dir($output_dir)->glob("diversion-mail-*.txt") ) unless $opt->{html_only};
 
     my $email = Email::Stuffer->new;
-    $email->transport("SMTP", $config->{smtp}) if exists $config->{smtp};
-    $email->subject( $config->{email}{subject} || "feed updates" );
+    $email->subject( $opt->{subject} || $config->{email}{subject} || "Some diversion arrives" );
     $email->from( $config->{email}{from} );
-    $email->to( $config->{email}{to} );
+    $email->to( $opt->{to} || $config->{email}{to} );
 
-    $email->html_body( $mail_body );
+    if ($mail_text) {
+	$email->text_body( scalar $mail_text->utf8->all );
+    }
 
-    $email->send();
+    if ($mail_html) {
+	$email->html_body( scalar $mail_html->utf8->all );
+    }
+
+    $email->transport("SMTP", $config->{smtp});
+
+    if ($opt->{n}) {
+	say $email->as_string;
+
+    } else {
+	my $successful;
+	eval {
+	    $successful = $email->send();
+	    1;
+	} or do {
+	    say "Error\n$@";
+	};
+	unless ($successful) {
+	    say "Error: failed to send the mail";
+	}
+    }
+
+    return 0;
+}
+
+sub take_newest_file_by_name {
+    my $maximum = $_[0];
+    for (@_[1..$#_]) {
+	$maximum = $_ if $_ gt $maximum
+    }
+    return $maximum;
 }
 
 1;
