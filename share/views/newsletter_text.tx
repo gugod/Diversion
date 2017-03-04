@@ -3,8 +3,8 @@
 Title: <: $entry.title :>
 Date: <: $entry.pubDate :>
 
-: if $entry.description_as_text {
-<: $entry.description_as_text :>
+: if $entry.description_short {
+<: $entry.description_short :>
 : }
 
 Link: <: $entry.link :>
