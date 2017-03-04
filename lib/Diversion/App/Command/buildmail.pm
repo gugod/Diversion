@@ -23,6 +23,7 @@ use Diversion::FeedArchiveIterator;
 sub opt_spec {
     return (
         ["ago=i", "Include entries created up to this second ago.", { default => 86400 }],
+        ["limit=i","Only include this number of entries..", { default => 0 }],
     )
 }
 
@@ -37,11 +38,12 @@ sub execute {
     my $JSON = JSON::PP->new->utf8;
 
     my $blob_store = $self->blob_store;
-    my $iter = Diversion::FeedArchiveIterator->new;
+    my $iter = Diversion::FeedArchiveIterator->new( sql_order_clause => "created_at DESC" );
     my $now = DateTime->now;
     my $fmt = DateTime::Format::RSS->new;
     my %seen;
     my $tmpl_data = {};
+    my $entry_count = 0;
     while (my $row = $iter->next()) {
 	next unless $row->{uri} && $row->{sha1_digest};
 	my $blob = $blob_store->get($row->{sha1_digest});
@@ -50,17 +52,25 @@ sub execute {
 	    next if !$entry->{pubDate} || !$entry->{link} || is_blank($entry->{title}) || $seen{$entry->{link}}++;
 	    
             $entry->{_pubDate_as_DateTime} = $fmt->parse_datetime($entry->{pubDate});
+	    
 	    if ($entry->{_pubDate_as_DateTime}) {
 		next if ($now - $entry->{_pubDate_as_DateTime})->in_units("seconds") > $opt->{ago};
+	    } else {
+		next;
 	    }
 	    
 	    if ($entry->{description} && length($entry->{description}) > 140) {
+		$entry->{description_short} = substr($entry->{description} =~ s/\p{Space}+/ /gr, 0, 137) . "...";
 		$entry->{description_short} = substr($entry->{description}, 0, 137) . "...";
 	    }
 	    $entry->{description} //= "";
 	    $entry->{description_short} //= "";
 	    
 	    push @{ $tmpl_data->{entries} }, $entry;
+
+	    if ($opt->{limit}) {
+		last if $entry_count++ > $opt->{limit};
+	    }
 	}
     }
 
