@@ -55,6 +55,9 @@ sub execute {
 	next unless $first_nl < 80 && $first_nl > 12;
 
 	my $subject = substr($text_body, 0, $first_nl);
+	if (defined($opt->{subject_prefix})) {
+	    $subject = $opt->{subject_prefix} . " " . $subject;
+	}
 
 	$text_body = "Link: $row->{uri}\n\n" . $text_body;
 	$html_body = "Link: <a href=\"$row->{uri}\">$row->{uri}</a><br>" . $html_body;
@@ -65,7 +68,7 @@ sub execute {
 
 	    say Encode::encode_utf8("Sending: $subject");
 	    $self->mail_this({
-		subject => "#Diversion: $subject",
+		subject => $subject,
 		text_body => $text_body,
 		html_body => $html_body,
 		($opt->{to} ? ( to => $opt->{to} ):()),
