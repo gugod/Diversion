@@ -46,25 +46,32 @@ sub execute {
         next unless $res->{headers} && $res->{headers}{"content-type"} && index($res->{headers}{"content-type"}, "text/html") >= 0;
         next if $dbh_content->selectrow_arrayref(q{ SELECT 1 FROM content WHERE uri_content_sha1_digest = ? }, {}, $row->{content_sha1_digest});
         my $res_content = $self->blob_store->get($row->{content_sha1_digest}) or next;
+	$res_content = Encode::decode_utf8($res_content) unless Encode::is_utf8($res_content);
 
 	my @extractions;
 
-        my $o = HTML::Content::Extractor->new;
-        $o->analyze($res_content);
-        if (my $main_text = $o->get_main_text) {
-	    push @extractions, {
-                extractor => "HTML::Content::Extractor",
-                main_text => $main_text,
-	    };
-	}
+	eval {
+	    my $o = HTML::Content::Extractor->new;
+	    $o->analyze($res_content);
+	    if (my $main_text = $o->get_main_text) {
+		push @extractions, {
+		    extractor => "HTML::Content::Extractor",
+		    main_text => $main_text,
+		};
+	    }
 
-	$res_content = Encode::decode_utf8($res_content) unless Encode::is_utf8($res_content);
-	if ($o = HTML::ExtractMain::extract_main_html($res_content)) {
-	    push @extractions, {
-		extractor => 'HTML::ExtractMain',
-		main_html => $o,
-	    };
-	}
+	    if ($o = HTML::ExtractMain::extract_main_html($res_content)) {
+		push @extractions, {
+		    extractor => 'HTML::ExtractMain',
+		    main_html => $o,
+		};
+	    }
+	    1;
+	} or do {
+	    # nothing. Ignore all failures.
+	    my $error = $@ // '(zombie error)';
+	    warn $error;
+	};
 
 	next unless @extractions;
 

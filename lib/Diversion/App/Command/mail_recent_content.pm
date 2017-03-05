@@ -17,6 +17,8 @@ sub opt_spec {
     return (
         ["to=s", "Send to this email address.", {}],
 	["limit=i", "Send this amount of email", { default => 10 }],
+	["ago=i", "Only include contents from this number of seconds ago.", { default => 60 }],
+	["n", "Dry-run"]
     )
 }
 
@@ -25,7 +27,9 @@ sub execute {
     my $JSON = JSON->new->utf8->canonical;
 
     my $count = 0;
-    my $iter = Diversion::ContentIterator->new;
+    my $x = DateTime::Format::MySQL->format_datetime( DateTime->from_epoch( epoch => ( time - $opt->{ago} ) ) );
+    my $iter = Diversion::ContentIterator->new( sql_where_clause => ['created_at > ?', $x ] );
+
     while (my $row = $iter->next) {
 	next if $row->{uri} =~ m{/$};
 
@@ -55,12 +59,18 @@ sub execute {
 	$text_body = "Link: $row->{uri}\n\n" . $text_body;
 	$html_body = "Link: <a href=\"$row->{uri}\">$row->{uri}</a><br>" . $html_body;
 
-	$self->mail_this({
-	    subject => "#Diversion: $subject",
-	    text_body => $text_body,
-	    html_body => $html_body,
-	    ($opt->{to} ? ( to => $opt->{to} ):()),
-        });
+	if ($opt->{n}) {
+	    say Encode::encode_utf8("DRY RUN: Sending: $subject");
+	} else {
+
+	    say Encode::encode_utf8("Sending: $subject");
+	    $self->mail_this({
+		subject => "#Diversion: $subject",
+		text_body => $text_body,
+		html_body => $html_body,
+		($opt->{to} ? ( to => $opt->{to} ):()),
+	    });
+	}
 
         last if ($count++ > $opt->{limit});
 
