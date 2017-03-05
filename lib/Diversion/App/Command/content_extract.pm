@@ -64,7 +64,6 @@ sub execute {
 		extractor => 'HTML::ExtractMain',
 		main_html => $o,
 	    };
-	    say $o;
 	}
 
 	next unless @extractions;
