@@ -10,7 +10,6 @@ use Diversion::ContentIterator;
 use Encode;
 use JSON;
 
-use List::Util qw(first);
 use DateTime;
 use DateTime::Format::MySQL;
 
@@ -40,8 +39,11 @@ sub execute {
             next;
         };
 
-	my ($text_body) = map { $_->{main_text} } first { $_->{main_text} } @{$res->{extractions}};
-	my ($html_body) = map { $_->{main_html} } first { $_->{main_html} } @{$res->{extractions}};
+	my ($text_body, $html_body);
+	for (@{$res->{extractions}}) {
+	    $text_body //= $_->{main_text};
+	    $html_body //= $_->{main_html};
+	}
 
 	next unless $text_body && $html_body;
 	next unless length($text_body) > 300;
@@ -51,6 +53,7 @@ sub execute {
 	my $subject = substr($text_body, 0, $first_nl);
 
 	$text_body = "Link: $row->{uri}\n\n" . $text_body;
+	$html_body = "Link: <a href=\"$row->{uri}\">$row->{uri}</a><br>" . $html_body;
 
 	$self->mail_this({
 	    subject => "#Diversion: $subject",
