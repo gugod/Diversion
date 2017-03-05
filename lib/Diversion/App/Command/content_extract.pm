@@ -67,7 +67,6 @@ sub execute {
 	    say $o;
 	}
 
-	next;
 	next unless @extractions;
 
         $blob = undef;
