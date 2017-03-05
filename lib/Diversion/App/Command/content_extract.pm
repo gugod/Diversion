@@ -46,17 +46,34 @@ sub execute {
         next unless $res->{headers} && $res->{headers}{"content-type"} && index($res->{headers}{"content-type"}, "text/html") >= 0;
         next if $dbh_content->selectrow_arrayref(q{ SELECT 1 FROM content WHERE uri_content_sha1_digest = ? }, {}, $row->{content_sha1_digest});
         my $res_content = $self->blob_store->get($row->{content_sha1_digest}) or next;
+
+	my @extractions;
+
         my $o = HTML::Content::Extractor->new;
         $o->analyze($res_content);
-        my $main_text = $o->get_main_text;
+        if (my $main_text = $o->get_main_text) {
+	    push @extractions, {
+                extractor => "HTML::Content::Extractor",
+                main_text => $main_text,
+	    };
+	}
 
-	next unless $main_text;
+	$res_content = Encode::decode_utf8($res_content) unless Encode::is_utf8($res_content);
+	if ($o = HTML::ExtractMain::extract_main_html($res_content)) {
+	    push @extractions, {
+		extractor => 'HTML::ExtractMain',
+		main_html => $o,
+	    };
+	    say $o;
+	}
+
+	next;
+	next unless @extractions;
 
         $blob = undef;
         eval {
             $blob = $JSON->encode({
-                main_text => $main_text,
-                extractor => "HTML::Content::Extractor"
+		extractions => \@extractions
             });
             1;
         } or do {

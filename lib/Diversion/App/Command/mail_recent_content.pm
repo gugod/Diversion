@@ -10,6 +10,7 @@ use Diversion::ContentIterator;
 use Encode;
 use JSON;
 
+use List::Util qw(first);
 use DateTime;
 use DateTime::Format::MySQL;
 
@@ -39,25 +40,26 @@ sub execute {
             next;
         };
 
-	my $text_body = $res->{main_text};
+	my ($text_body) = map { $_->{main_text} } first { $_->{main_text} } @{$res->{extractions}};
+	my ($html_body) = map { $_->{main_html} } first { $_->{main_html} } @{$res->{extractions}};
 
-	next unless $text_body;
+	next unless $text_body && $html_body;
 	next unless length($text_body) > 300;
 	my $first_nl = index($text_body, "\n");
 	next unless $first_nl < 80 && $first_nl > 12;
 
 	my $subject = substr($text_body, 0, $first_nl);
 
-
 	$text_body = "Link: $row->{uri}\n\n" . $text_body;
 
 	$self->mail_this({
 	    subject => "#Diversion: $subject",
 	    text_body => $text_body,
+	    html_body => $html_body,
 	    ($opt->{to} ? ( to => $opt->{to} ):()),
         });
 
-	last if ($count++ > $opt->{limit});
+        last if ($count++ > $opt->{limit});
 
     }
 }
@@ -72,7 +74,7 @@ sub mail_this {
     $email->from( $config->{email}{from} );
 
     unless ($email->send()) {
-	say "Error sending this mail: " . $mail_params->{subject};
+        say "Error sending this mail: " . $mail_params->{subject};
     }
 }
 
