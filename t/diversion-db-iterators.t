@@ -6,6 +6,7 @@ use Test::More;
 use Diversion::App;
 use Diversion::ContentIterator;
 use Diversion::UrlArchiveIterator;
+use Diversion::FeedArchiveIterator;
 
 use File::XDG;
 use TOML qw(from_toml);
@@ -33,7 +34,6 @@ sub test_content_iterator {
     my $count = 0;
     my $iter = Diversion::ContentIterator->new();
     while (my $row = $iter->next()) {
-        diag $row->{uri};
         last if $count++ > 10;
     }
 
@@ -45,14 +45,24 @@ sub test_url_archive_iterator {
     my $count = 0;
     my $iter = Diversion::UrlArchiveIterator->new();
     while (my $row = $iter->next()) {
-        diag $row->{uri};
         last if $count++ > 3000;
     }
     ok $count > 3000;
     pass "UrlArchiveIterator";
 }
 
+sub test_feed_archive_iterator {
+    my $count = 0;
+    my $iter = Diversion::FeedArchiveIterator->new();
+    while (my $row = $iter->next()) {
+        last if $count++ > 3000;
+    }
+    ok $count > 3000;
+    pass "FeedArchiveIterator";
+}
+
 init_config();
+test_feed_archive_iterator();
 test_content_iterator();
 test_url_archive_iterator();
 
