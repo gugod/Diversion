@@ -46,9 +46,9 @@ sub test_url_archive_iterator {
     my $iter = Diversion::UrlArchiveIterator->new();
     while (my $row = $iter->next()) {
         diag $row->{uri};
-        last if $count++ > 10;
+        last if $count++ > 3000;
     }
-    ok $count > 0;
+    ok $count > 3000;
     pass "UrlArchiveIterator";
 }
 
