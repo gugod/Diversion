@@ -43,6 +43,7 @@ sub execute {
             warn "Fail to decode json for of blob $row->{response_sha1_digest}\n";
             next;
         };
+        next unless $res->{status} && $res->{status} eq '200';
         next unless $res->{headers} && $res->{headers}{"content-type"} && index($res->{headers}{"content-type"}, "text/html") >= 0;
         next if $dbh_content->selectrow_arrayref(q{ SELECT 1 FROM content WHERE uri_content_sha1_digest = ? }, {}, $row->{content_sha1_digest});
         my $res_content = $self->blob_store->get($row->{content_sha1_digest}) or next;
