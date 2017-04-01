@@ -58,14 +58,14 @@ sub execute {
 		push @extractions, {
 		    extractor => "HTML::Content::Extractor",
 		    main_text => $main_text,
-		};
+		} unless length($o) < 60;
 	    }
 
 	    if ($o = HTML::ExtractMain::extract_main_html($res_content)) {
 		push @extractions, {
 		    extractor => 'HTML::ExtractMain',
 		    main_html => $o,
-		};
+		} unless length($o) < 60;
 	    }
 	    1;
 	} or do {
