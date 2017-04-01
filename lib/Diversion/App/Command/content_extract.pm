@@ -65,7 +65,7 @@ sub execute {
 		push @extractions, {
 		    extractor => 'HTML::ExtractMain',
 		    main_html => $o,
-		} unless length($o) < 60;
+		} unless length($o) < 140;
 	    }
 	    1;
 	} or do {
