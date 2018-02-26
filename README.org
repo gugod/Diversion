@@ -19,6 +19,11 @@ CREATE TABLE lookup_uri (
     `uri` varchar(900) NOT NULL UNIQUE
 );
 
+CREATE TABLE lookup_tag (
+    `id` INT PRIMARY KEY AUTO_INCREMENT,
+    `tag` varchar(128) NOT NULL UNIQUE
+);
+
 CREATE TABLE lookup_collection (
     `id` INT PRIMARY KEY AUTO_INCREMENT,
     `collection` varchar(128) NOT NULL UNIQUE
@@ -28,6 +33,12 @@ CREATE TABLE rel_uri_collection (
     `uri_id` INT,
     `collection_id` INT,
     PRIMARY KEY (uri_id, collection_id)
+);
+
+CREATE TABLE rel_uri_tag (
+    `uri_id` INT,
+    `tag_id` INT,
+    PRIMARY KEY (uri_id, tag_id)
 );
 
 ** uri_archive
