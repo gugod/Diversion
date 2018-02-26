@@ -11,6 +11,25 @@ CREATE TABLE content (
     PRIMARY KEY (`uri_content_sha1_digest`, `uri`)
 );
 
+
+** lookup tables & relation tables
+
+CREATE TABLE lookup_uri (
+    `id` INT PRIMARY KEY AUTO_INCREMENT,
+    `uri` varchar(900) NOT NULL UNIQUE
+);
+
+CREATE TABLE lookup_collection (
+    `id` INT PRIMARY KEY AUTO_INCREMENT,
+    `collection` varchar(128) NOT NULL UNIQUE
+);
+
+CREATE TABLE rel_uri_collection (
+    `uri_id` INT,
+    `collection_id` INT,
+    PRIMARY KEY (uri_id, collection_id)
+);
+
 ** uri_archive
 
 CREATE TABLE uri_archive (
