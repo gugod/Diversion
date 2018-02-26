@@ -12,7 +12,9 @@ sub lookup {
     my ($self, $val) = @_;
     my $what = $self->what;
     my $table = "lookup_${what}";
+
     my $dbh = $self->db_open("lookup");
+
     my $sql_lookup = qq{ SELECT `id` FROM `${table}` WHERE `${what}` = ? LIMIT 1 };
 
     my $ret = $dbh->selectcol_arrayref($sql_lookup, {}, $val);
