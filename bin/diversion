@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 use v5.18;
+use strict;
+use warnings;
 
 use Log::Dispatch;
 use Log::Any::Adapter;
