@@ -1,6 +1,7 @@
 requires 'App::Cmd'                       => '0.327';
 requires 'Authen::SASL'                   => '0';
 requires 'DBD::SQLite'                    => '1.46';
+requires 'DBD::mysql'                     => '0';
 requires 'DBI'                            => '0';
 requires 'Data::Binary'                   => '0';
 requires 'DateTime'                       => '0';
