@@ -10,6 +10,12 @@ requires 'columns';
 use DateTime;
 use DateTime::Format::MySQL;
 
+has sql_batch_size => (
+    is => "ro",
+    default => sub { 1000 },
+    required => 1,
+);
+
 has sql_where_clause => (
     is => "ro",
     predicate => 1
@@ -53,7 +59,7 @@ sub reify {
                 push @where_values, @w;
             }
 
-            return $dbh->selectall_arrayref("$SELECT_CLAUSE WHERE $WHERE_CLAUSE $ORDER_CLAUSE LIMIT ?,1000", {Slice=>{}}, @where_values, $ext_cursor);
+            return $dbh->selectall_arrayref("$SELECT_CLAUSE WHERE $WHERE_CLAUSE $ORDER_CLAUSE LIMIT ?,".$self->sql_batch_size, {Slice=>{}}, @where_values, $ext_cursor);
         }
     );
 
@@ -62,11 +68,5 @@ sub reify {
     $self->_cursor( 0 );
     return $self;
 }
-
-1;
-
-
-
-
 
 1;
