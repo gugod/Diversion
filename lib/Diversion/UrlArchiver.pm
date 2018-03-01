@@ -16,12 +16,13 @@ package Diversion::UrlArchiver {
 
     sub get_local {
         my ($self, $url) = @_;
+        my $uri_id = Diversion::Lookup->new( what => "uri" )->lookup($url);
 
         my $row = $self->db_open(
             "url",
             sub {
                 my ($dbh) = @_;
-                return $dbh->selectrow_hashref(q{ SELECT response_sha1_digest,content_sha1_digest FROM uri_archive WHERE uri = ? ORDER BY updated_at DESC LIMIT 1}, {}, $url);
+                return $dbh->selectrow_hashref(q{ SELECT response_sha1_digest,content_sha1_digest FROM uri_archive WHERE uri_id = ? ORDER BY updated_at DESC LIMIT 1}, {}, $uri_id);
             }
         );
         return undef unless $row;
@@ -47,24 +48,26 @@ package Diversion::UrlArchiver {
 
         my $response_digest = $blob_store->put("". $JSON->encode($response));
 
+        my $uri_id = Diversion::Lookup->new( what => "uri" )->lookup($url);
+
         $self->db_open(
             "url",
             sub {
                 my ($dbh) = @_;
-                my $sth_check = $dbh->prepare(q{ SELECT 1 FROM uri_archive WHERE uri = ? AND content_sha1_digest = ? LIMIT 1});
-                $sth_check->execute($url, $response_content_digest);
+                my $sth_check = $dbh->prepare(q{ SELECT 1 FROM uri_archive WHERE uri_id = ? AND content_sha1_digest = ? LIMIT 1});
+                $sth_check->execute($uri_id, $response_content_digest);
                 my $now = DateTime::Format::MySQL->format_datetime( DateTime->from_epoch( epoch => scalar time ) );
                 if ($sth_check->fetchrow_array) {
                     $dbh->do(
-                        q{ UPDATE uri_archive SET updated_at = ? WHERE uri = ? AND content_sha1_digest = ? },
+                        q{ UPDATE uri_archive SET updated_at = ? WHERE uri_id = ? AND content_sha1_digest = ? },
                         {},
-                        $now, $url, $response_content_digest
+                        $now, $uri_id, $response_content_digest
                     );
                 } else {
                     $dbh->do(
-                        q{ INSERT INTO uri_archive(uri, created_at, updated_at, response_sha1_digest, content_sha1_digest) VALUES (?,?,?,?,?) },
+                        q{ INSERT INTO uri_archive(uri_id, created_at, updated_at, response_sha1_digest, content_sha1_digest) VALUES (?,?,?,?,?) },
                         {},
-                        $url, $now, $now, $response_digest, $response_content_digest
+                        $uri_id, $now, $now, $response_digest, $response_content_digest
                     );
                 }
                 $sth_check->finish;
