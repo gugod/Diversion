@@ -22,6 +22,7 @@ sub execute {
     my $lookup_uri = Diversion::Lookup->new( what => "uri" );
 
     for my $tag (@{ $opt->{tag} }) {
+        utf8::decode($tag) unless utf8::is_utf8($tag);
         my $id = $lookup_tag->lookup($tag);
         push @tags, $id;
     }

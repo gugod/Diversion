@@ -19,7 +19,12 @@ sub db_open {
         $conf->{dsn},
         $conf->{username},
         $conf->{password},
-        { AutoCommit => 1 }
+        +{
+            AutoCommit => 1,
+            ($conf->{dsn} =~ /^DBI:mysql/) ? (
+                mysql_enable_utf8mb4 => 1,
+            ):(),
+        }
     );
     if ($cb) {
         my $ret = $cb->($dbh);
