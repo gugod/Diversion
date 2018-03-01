@@ -44,7 +44,7 @@ CREATE TABLE rel_uri_tag (
 ** uri_archive
 
 CREATE TABLE uri_archive (
-    `uri`   varchar(900) NOT NULL,
+    `uri_id` INT NOT NULL,
     `created_at` int NOT NULL,
     `content_sha1_digest` char(40) NOT NULL,
     `header_sha1_digest` char(40) NOT NULL,
