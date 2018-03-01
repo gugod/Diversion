@@ -6,7 +6,7 @@ use constant {
     table => "uri_archive",
     columns => [qw(uri_id response_sha1_digest content_sha1_digest created_at)]
 };
-with 'Diversion::SingleTableIterator', 'Diversion::Service';
+with 'Diversion::SingleTableIterator';
 
 after 'reify' => sub {
     my ($self) = @_;
