@@ -94,4 +94,5 @@ sub mail_this {
     }
 }
 
+no Moo;
 1;

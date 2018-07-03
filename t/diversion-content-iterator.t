@@ -14,10 +14,6 @@ my $config = from_toml(scalar $config_file->slurp);
 
 my $app = Diversion::App->new->set_config($config);
 
-
-
-
-
 my $iter = Diversion::ContentIterator->new();
 
 while (my $row = $iter->next()) {

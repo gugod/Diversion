@@ -107,4 +107,5 @@ sub lookup {
     return $ret->[0] if defined($ret->[0]);
 }
 
+no Moo;
 1;

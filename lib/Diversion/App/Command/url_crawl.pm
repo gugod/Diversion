@@ -87,4 +87,5 @@ sub find_links {
     return $links;
 }
 
+no Moo;
 1;

@@ -10,7 +10,7 @@ package Diversion::UrlArchiver {
     use DateTime;
     use DateTime::Format::MySQL;
     use Digest::SHA1 'sha1_hex';
-    use Data::Binary qw(is_binary);
+    
 
     my $JSON = JSON->new->canonical->pretty;
 
@@ -85,4 +85,5 @@ package Diversion::UrlArchiver {
         return $self->get_remote($url);
     }
 };
+no Moo;
 1;

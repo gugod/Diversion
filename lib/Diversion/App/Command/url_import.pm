@@ -36,7 +36,6 @@ sub execute {
     }
     close($fh);
 
-
     if (@tags && @urls) {
         my @bulk;
         for my $u (@urls) {
@@ -57,4 +56,5 @@ sub bulk_insert {
     $self->db_open('lookup')->do($sql, {}, map { (@$_) } @$rows);
 }
 
+no Moo;
 1;

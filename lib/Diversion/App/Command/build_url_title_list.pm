@@ -48,13 +48,13 @@ sub for_each_url_with_content {
     );
 
     my $JSON = JSON->new;
-    my @list;
+    
     while (my $row = $iter->next) {
         next unless $row->{uri} =~ /^https?:/;
         unless ($self->blob_store->exists($row->{response_sha1_digest})) {
             warn "Blob is missing: $row->{response_sha1_digest} $row->{uri}";
         }
-        
+
         my $blob = $self->blob_store->get($row->{response_sha1_digest});
 
         my $res;
@@ -92,4 +92,5 @@ sub for_each_url_with_content {
     }
 }
 
+no Moo;
 1;

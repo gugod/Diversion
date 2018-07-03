@@ -101,4 +101,5 @@ sub execute {
     $dbh_content->disconnect;
 }
 
+no Moo;
 1;

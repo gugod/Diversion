@@ -5,7 +5,6 @@ use Diversion::App -command;
 use Moo;
 with 'Diversion::Service';
 
-use List::Util qw(shuffle);
 use List::MoreUtils qw( uniq );
 use IO::Handle;
 use Log::Any qw($log);
@@ -89,7 +88,7 @@ sub execute_balance {
     }
 
     close($_->[1]) for @workers;
-    waitpid(-1,0) for 0..$#workers;
+    waitpid(-1, 0) for 0..$#workers;
 }
 
 sub find_links {
@@ -132,7 +131,7 @@ sub find_links {
 
 sub fork_worker {
     my ($cb) = @_;
-    my ($pr,$pw);
+    my ($pr, $pw);
     pipe($pr, $pw);
 
     $pr->autoflush();
@@ -147,4 +146,5 @@ sub fork_worker {
     }
 }
 
+no Moo;
 1;

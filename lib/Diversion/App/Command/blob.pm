@@ -41,4 +41,5 @@ sub execute {
     }
 }
 
+no Moo;
 1;

@@ -18,5 +18,5 @@ after 'reify' => sub {
     }
 };
 
-
+no Moo;
 1;

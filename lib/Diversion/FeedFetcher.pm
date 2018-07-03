@@ -3,7 +3,7 @@ use v5.14;
 package Diversion::FeedFetcher {
     use Moo;
     use XML::Loy;
-    use Encode qw(decode);
+    use Encode qw();
 
     use Diversion::UrlArchiver;
 
@@ -105,4 +105,5 @@ package Diversion::FeedFetcher {
 
 };
 
+no Moo;
 1;

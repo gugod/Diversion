@@ -1,6 +1,6 @@
 package Diversion::BlobStore;
 use Moo;
-use Digest::SHA1 qw(sha1_hex);
+
 use File::Next;
 use File::Spec;
 use File::Path qw(make_path);
@@ -46,7 +46,7 @@ sub _fh_rw {
 
 sub _filename {
     my ($self, $digest) = @_;
-    my $pre  = substr($digest,0,4);
+    my $pre  = substr($digest, 0, 4);
     my $dir = File::Spec->catdir($self->root, $pre);
     my $file = File::Spec->catfile($dir, $digest);
     return ($dir, $file);
@@ -99,4 +99,5 @@ sub each {
     }
 }
 
+no Moo;
 1;

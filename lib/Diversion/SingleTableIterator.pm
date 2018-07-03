@@ -42,7 +42,7 @@ sub reify {
     my $rows = $self->db_open(
         $db => sub {
             my ($dbh) = @_;
-            
+
             my $SELECT_CLAUSE = "SELECT $columns_csv FROM $table";
             my $ORDER_CLAUSE = "";
 

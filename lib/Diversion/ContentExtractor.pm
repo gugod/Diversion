@@ -29,4 +29,5 @@ package Diversion::ContentExtractor {
     }
 }
 
+no Moo;
 1;

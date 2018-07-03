@@ -2,7 +2,6 @@
 
 use strict;
 use Test::Spec;
-use Scalar::Util qw(looks_like_number);
 
 use Diversion::FeedArchiver;
 

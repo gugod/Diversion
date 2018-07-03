@@ -9,7 +9,7 @@ use IO::All;
 use JSON::PP;
 use DateTime;
 use DateTime::Format::RSS;
-use List::UtilsBy qw( rev_nsort_by uniq_by );
+use List::UtilsBy qw( rev_nsort_by );
 use List::Util qw( max );
 use Text::Xslate;
 use Text::WrapI18N qw(wrap);
@@ -23,7 +23,7 @@ use Diversion::FeedArchiveIterator;
 sub opt_spec {
     return (
         ["ago=i", "Include entries created up to this second ago.", { default => 86400 }],
-        ["limit=i","Only include this number of entries..", { default => 0 }],
+        ["limit=i", "Only include this number of entries..", { default => 0 }],
     )
 }
 
@@ -81,14 +81,14 @@ sub execute {
     my @l = (localtime)[5,4,3,2,1];
     $l[0]+=1900;
     $l[1]+=1;
-    my $ts = sprintf("%4d%02d%02d%02d%02d",@l);
+    my $ts = sprintf("%4d%02d%02d%02d%02d", @l);
     my $output_dir = Diversion::App->config->{output}{directory} || "/tmp";
 
     my ($text_body, $html_body);
     if ($text_body = build_text_mail($tmpl_data)) {
 	io->catfile($output_dir, "diversion-mail-$ts.txt")->utf8->print($text_body);
     }
-    
+
     if ($html_body = build_html_mail($tmpl_data)) {
 	io->catfile($output_dir, "diversion-mail-$ts.html")->utf8->print($html_body);
     }
@@ -147,4 +147,5 @@ sub build_html_mail {
     return scalar $tx->render("newsletter.tx", $tmpl_data);
 }
 
+no Moo;
 1;

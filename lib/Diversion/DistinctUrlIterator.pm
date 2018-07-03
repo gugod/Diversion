@@ -43,4 +43,5 @@ sub reify {
     return $self;
 }
 
+no Moo;
 1;

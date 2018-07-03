@@ -56,4 +56,5 @@ sub execute {
     $forkman->wait_all_children;
 }
 
+no Moo;
 1;

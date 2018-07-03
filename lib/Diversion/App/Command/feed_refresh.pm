@@ -6,8 +6,6 @@ use Moo;
 with 'Diversion::Service';
 
 use IO::All;
-use List::Util qw(shuffle);
-use List::MoreUtils qw(uniq);
 
 use Diversion::FeedArchiver;
 use Diversion::FeedUrlIterator;
@@ -45,4 +43,5 @@ sub execute {
     $forkman->wait_all_children;
 }
 
+no Moo;
 1;

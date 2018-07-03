@@ -6,7 +6,7 @@ package Diversion::FeedArchiver {
 
     use Encode;
     use IO::All;
-    use Digest::SHA1 qw<sha1_hex>;
+    
     use Sereal::Encoder;
 
     use Log::Any qw($log);
@@ -38,4 +38,5 @@ package Diversion::FeedArchiver {
     }
 };
 
+no Moo;
 1;

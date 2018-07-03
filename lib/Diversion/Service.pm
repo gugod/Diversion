@@ -29,7 +29,7 @@ sub db_open {
     if ($cb) {
         my $ret = $cb->($dbh);
         $dbh->disconnect;
-        return $ret;        
+        return $ret;
     } else {
         return $dbh;
     }

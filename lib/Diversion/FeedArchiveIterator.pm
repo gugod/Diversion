@@ -7,4 +7,5 @@ use constant {
     columns => [qw( uri sha1_digest created_at )],
 };
 with 'Diversion::SingleTableIterator';
+no Moo;
 1;

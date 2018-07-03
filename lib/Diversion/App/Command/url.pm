@@ -95,4 +95,5 @@ sub delete_blob_and_uri_archive_reference {
     );
 }
 
+no Moo;
 1;
