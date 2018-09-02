@@ -42,7 +42,14 @@ package Diversion::UrlArchiver {
 
         my $blob_store = $self->blob_store;
 
-        my $response = HTTP::Tiny->new( timeout => 60, max_size => 512000, (agent => $ENV{DIVERSION_HTTP_USER_AGENT} || "Diversion ") )->get($url);
+        my $response = HTTP::Tiny->new(
+            timeout => 60,
+            max_size => 512000,
+            (agent => $ENV{DIVERSION_HTTP_USER_AGENT} || "Diversion ")
+        )->get($url);
+
+        return undef unless $response->{success};
+
         my $response_content = delete $response->{content};
         my $response_content_digest = $blob_store->put($response_content);
 
