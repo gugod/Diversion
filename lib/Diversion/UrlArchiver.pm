@@ -9,8 +9,6 @@ package Diversion::UrlArchiver {
     use DBI;
     use DateTime;
     use DateTime::Format::MySQL;
-    use Digest::SHA1 'sha1_hex';
-    
 
     my $JSON = JSON->new->canonical->pretty;
 

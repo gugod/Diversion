@@ -5,6 +5,7 @@ use File::Next;
 use File::Spec;
 use File::Path qw(make_path);
 use PerlIO::via::gzip;
+use Digest::SHA1 'sha1_hex';
 
 use IO::Compress::Gzip qw(Z_BEST_COMPRESSION);
 $PerlIO::via::gzip::COMPRESSION_LEVEL=Z_BEST_COMPRESSION;
