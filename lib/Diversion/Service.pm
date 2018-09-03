@@ -20,6 +20,7 @@ sub db_open {
         $conf->{username},
         $conf->{password},
         +{
+            mysql_auto_reconnect => 1,
             AutoCommit => 1,
             ($conf->{dsn} =~ /^DBI:mysql/) ? (
                 mysql_enable_utf8mb4 => 1,
