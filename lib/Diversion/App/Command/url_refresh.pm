@@ -30,8 +30,9 @@ sub execute {
         next unless !$re || $uri =~ m{$re};
 
         $forkman->start and next;
-        my $res = $url_archiver->get_remote($uri);
-        say "[$$] $res->{status} $uri";
+        if (my $res = $url_archiver->get_remote($uri)) {
+            say "[$$] $res->{status} $uri";
+        }
         $forkman->finish;
     }
     $forkman->wait_all_children;

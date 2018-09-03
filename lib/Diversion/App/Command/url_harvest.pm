@@ -44,7 +44,7 @@ sub execute_balance {
             next if $url_archiver->get_local($u);
             $0 = "diversion url_harvest - $u";
             my $begin_time = time;
-            my $res = $url_archiver->get_remote($u);
+            my $res = $url_archiver->get_remote($u) or next;
             my $spent_time = time - $begin_time;
             $log->info("[$$] HARVEST $res->{status} (${spent_time}s) $u\n");
             if ($res->{status} eq '599') {

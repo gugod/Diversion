@@ -19,10 +19,11 @@ sub execute {
     my $o = Diversion::UrlArchiver->new;
     for my $url (@$args) {
         $forkman->start and next;
-        my $res = $o->get_remote($url);
-        $log->info("[$$] ARCHIVE $res->{status} $url\n");
-        if ($res->{status} eq '599') {
-            $log->debug("[$$] DEBUG status = 599: $res->{content}\n");
+        if (my $res = $o->get_remote($url)) {
+            $log->info("[$$] ARCHIVE $res->{status} $url\n");
+            if ($res->{status} eq '599') {
+                $log->debug("[$$] DEBUG status = 599: $res->{content}\n");
+            }
         }
         $forkman->finish;
     }

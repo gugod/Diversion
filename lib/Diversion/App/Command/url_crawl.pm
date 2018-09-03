@@ -35,7 +35,7 @@ sub execute {
     for my $u (@$args) {
         $forkman->start and next;
         $0 = "diversion - url_crawl - $u";
-        my $response = $url_archiver->get_remote($u);
+        my $response = $url_archiver->get_remote($u) or next;
         $log->debug("[$$] CRAWL $response->{status} $u\n");
         my $links = [];
         if ($response && $response->{success}) {
@@ -48,7 +48,7 @@ sub execute {
     for my $u (shuffle uniq @uris) {
         $forkman->start and next;
         $0 = "diversion - url_crawl - $u";
-        my $response = $url_archiver->get_remote($u);
+        my $response = $url_archiver->get_remote($u) or next;
         $log->debug("[$$] CRAWL $response->{status} $u\n");
         $forkman->finish;
     }

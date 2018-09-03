@@ -24,7 +24,7 @@ package Diversion::FeedFetcher {
         my $feed = { entry => \@entries };
         my $response = Diversion::UrlArchiver->new->get_remote( $self->url );
 
-        die "Failed to retrieve ". $self->url ." : $response->{reason}" unless $response->{success};
+        die "Failed to retrieve ". $self->url ." : $response->{reason}" unless $response && $response->{success};
         die "Status Not OK: " . $self->url . " : $response->{reason}" unless $response->{status} == 200;
 
         my ($enc) = $response->{content} =~ m!\A.+encoding="([^"]+)"!;
