@@ -35,7 +35,6 @@ requires 'Moo'                            => '0';
 requires 'Mozilla::CA'                    => '20130114';
 requires 'Net::SMTP::SSL'                 => '1.01';
 requires 'Parallel::ForkManager'          => '0';
-requires 'PerlIO::Util'                   => '0';
 requires 'PerlIO::via::gzip'              => '0.021';
 requires 'Sereal'                         => '0';
 requires 'TOML'                           => '0';
