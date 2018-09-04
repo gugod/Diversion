@@ -6,6 +6,7 @@ use Moo;
 with 'Diversion::Service';
 use Log::Any qw($log);
 
+use Mojo::DOM;
 use List::Util 'shuffle';
 use List::MoreUtils 'uniq';
 use Parallel::ForkManager;
