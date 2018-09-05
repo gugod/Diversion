@@ -9,7 +9,7 @@ use Log::Any qw($log);
 use Mojo::DOM;
 use List::Util 'shuffle';
 use List::MoreUtils 'uniq';
-use Parallel::ForkManager;
+use MCE::Stream;
 
 sub opt_spec {
     return (
@@ -22,38 +22,22 @@ sub execute {
     my ($self, $opt, $args) = @_;
     my $url_archiver = Diversion::UrlArchiver->new;
 
-    my @uris;
-    my $forkman = Parallel::ForkManager->new( $opt->{workers} );
-    $forkman->run_on_finish(
-        sub {
-            my $data = pop;
-            if ($data) {
-                push @uris, @$data;
-            }
-        }
-    );
+    mce_stream sub {
+        $0 = "diversion - url_crawl - $_";
+        my $response = $url_archiver->get_remote($_) or return;
+        $log->debug("[$$] CRAWL $response->{status} $_\n");
+    }, sub {
+        my $u = $_;
 
-    for my $u (@$args) {
-        $forkman->start and next;
+        my @links;
         $0 = "diversion - url_crawl - $u";
-        my $response = $url_archiver->get_remote($u) or next;
+        my $response = $url_archiver->get_remote($u) or return;
         $log->debug("[$$] CRAWL $response->{status} $u\n");
-        my $links = [];
         if ($response && $response->{success}) {
-            $links = find_links($response, $u, $opt->{only_same_host});
+            push @links, @{find_links($response, $u, $opt->{only_same_host})};
         }
-        $forkman->finish(0, $links);
-    }
-    $forkman->wait_all_children;
-
-    for my $u (shuffle uniq @uris) {
-        $forkman->start and next;
-        $0 = "diversion - url_crawl - $u";
-        my $response = $url_archiver->get_remote($u) or next;
-        $log->debug("[$$] CRAWL $response->{status} $u\n");
-        $forkman->finish;
-    }
-    $forkman->wait_all_children;
+        return @links;
+    }, $args;
 }
 
 sub find_links {

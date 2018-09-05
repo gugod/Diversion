@@ -30,6 +30,7 @@ requires 'Log::Any'                       => '0.15';
 requires 'Log::Any::Adapter::Dispatch'    => '0.06';
 requires 'Log::Dispatch'                  => '2.41';
 requires 'MIME::Base64'                   => '0';
+requires 'MCE'                            => '0';
 requires 'Mojolicious'                    => '4';
 requires 'Moo'                            => '0';
 requires 'Mozilla::CA'                    => '20130114';
