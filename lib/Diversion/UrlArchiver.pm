@@ -9,6 +9,7 @@ package Diversion::UrlArchiver {
     use DBI;
     use DateTime;
     use DateTime::Format::MySQL;
+    use Digest::SHA1 'sha1_hex';
 
     my $JSON = JSON->new->canonical->pretty;
 
@@ -49,7 +50,13 @@ package Diversion::UrlArchiver {
         return undef unless $response->{success};
 
         my $response_content = delete $response->{content};
-        my $response_content_digest = $blob_store->put($response_content);
+        my $ct_header = $response->{headers}{'content-type'};
+        my ($content_type) = $ct_header =~ m{\A([^;\s]+);?};
+        my ($charset) = $ct_header =~ m{charset=(\S+)};
+        $charset //= '';
+        $charset = lc($charset);
+
+        my $response_content_digest = sha1_hex($response_content);
 
         my $response_digest = $blob_store->put("". $JSON->encode($response));
 
@@ -70,9 +77,10 @@ package Diversion::UrlArchiver {
                     );
                 } else {
                     $dbh->do(
-                        q{ INSERT INTO uri_archive(uri_id, created_at, updated_at, response_sha1_digest, content_sha1_digest) VALUES (?,?,?,?,?) },
+                        q{ INSERT INTO uri_archive(uri_id, created_at, updated_at, response_sha1_digest, content_sha1_digest, content, content_type, charset) VALUES (?,?,?,?,?,?,?,?) },
                         {},
-                        $uri_id, $now, $now, $response_digest, $response_content_digest
+                        $uri_id, $now, $now, $response_digest, $response_content_digest,
+                        $response_content, $content_type, $charset
                     );
                 }
                 $sth_check->finish;
