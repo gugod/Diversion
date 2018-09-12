@@ -34,6 +34,8 @@ sub execute {
         sql_where_clause => ["created_at >= ?", $x ],
     );
     while (my $row = $iter->next) {
+        next if $dbh_content->selectrow_arrayref(q{ SELECT 1 FROM content WHERE uri_content_sha1_digest = ? }, {}, $row->{content_sha1_digest});
+
         my $blob = $self->blob_store->get($row->{response_sha1_digest}) or next;
         my $res;
         eval {
@@ -45,7 +47,6 @@ sub execute {
         };
         next unless $res->{status} && $res->{status} eq '200';
         next unless $res->{headers} && $res->{headers}{"content-type"} && index($res->{headers}{"content-type"}, "text/html") >= 0;
-        next if $dbh_content->selectrow_arrayref(q{ SELECT 1 FROM content WHERE uri_content_sha1_digest = ? }, {}, $row->{content_sha1_digest});
         my $res_content = $self->blob_store->get($row->{content_sha1_digest}) or next;
 	$res_content = Encode::decode_utf8($res_content) unless Encode::is_utf8($res_content);
 
