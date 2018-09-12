@@ -4,7 +4,7 @@ use Moo;
 use constant {
     database => "url",
     table => "uri_archive",
-    columns => [qw(uri_id response_sha1_digest content_sha1_digest created_at)]
+    columns => [qw(uri_id response_sha1_digest content_sha1_digest created_at content content_type charset)]
 };
 with 'Diversion::SingleTableIterator';
 
