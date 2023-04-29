@@ -1,8 +1,6 @@
 #!/usr/bin/env perl
-
-use strict;
+use v5.36;
 use Test::Spec;
-
 use Diversion::FeedArchiver;
 
 my $FEEDURL = "http://gugod.org/atom.xml";

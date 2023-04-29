@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
-
-use strict;
+use v5.36;
 use Test::Spec;
 use Scalar::Util qw(looks_like_number);
 

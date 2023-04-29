@@ -1,5 +1,5 @@
 package Diversion::FeedUrlIterator;
-use v5.18;
+use v5.36;
 use Moo;
 with 'Diversion::Iterator', 'Diversion::Service';
 

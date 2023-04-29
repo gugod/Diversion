@@ -1,6 +1,6 @@
 package Diversion::App::Command::sendmail;
 #ABSTRACT: Send previously built mails.
-use v5.18;
+use v5.36;
 use Diversion::App -command;
 
 use IO::All;

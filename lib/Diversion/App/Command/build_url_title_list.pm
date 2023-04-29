@@ -1,7 +1,7 @@
 package Diversion::App::Command::build_url_title_list;
 #ABSTRACT: Render a list of URLs to html.
 
-use v5.18;
+use v5.36;
 use Diversion::App -command;
 use Moo;
 with 'Diversion::Service';

@@ -1,6 +1,6 @@
 package Diversion::App::Command::url_import;
 # ABSTRACT: Import URLs and relate them to tags
-use v5.18;
+use v5.36;
 use Moo;
 with 'Diversion::Service';
 use Diversion::App -command;

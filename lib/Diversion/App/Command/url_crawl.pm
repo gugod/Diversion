@@ -1,6 +1,6 @@
 package Diversion::App::Command::url_crawl;
 # ABSTRACT: crawl given urls
-use v5.18;
+use v5.36;
 use Diversion::App -command;
 use Moo;
 with 'Diversion::Service';

@@ -1,4 +1,4 @@
-FROM perl:5.28
+FROM perl:5.36
 RUN cpanm -n -q --no-man-pages App::cpm
 
 COPY [".", "/app"]

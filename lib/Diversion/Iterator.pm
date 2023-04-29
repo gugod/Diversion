@@ -1,5 +1,5 @@
 package Diversion::Iterator;
-use v5.18;
+use v5.36;
 use Moo::Role;
 
 requires 'reify';

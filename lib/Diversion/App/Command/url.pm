@@ -1,6 +1,6 @@
 package Diversion::App::Command::url;
 # ABSTRACT: List all urls in database (one url per line)
-use v5.18;
+use v5.36;
 use Moo;
 with 'Diversion::Service';
 use Diversion::App -command;

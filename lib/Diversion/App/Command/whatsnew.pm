@@ -1,6 +1,6 @@
 package Diversion::App::Command::whatsnew;
 #ABSTRACT: List new URLs in the archive
-use v5.18;
+use v5.36;
 use Diversion::App -command;
 
 use Moo;

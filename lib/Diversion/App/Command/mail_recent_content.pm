@@ -1,6 +1,6 @@
 package Diversion::App::Command::mail_recent_content;
 # ABSTRACT: Iterate through recent content and email them.
-use v5.18;
+use v5.36;
 use Diversion::App -command;
 use Moo;
 with 'Diversion::Service';

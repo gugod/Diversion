@@ -1,5 +1,5 @@
 package Diversion::App::Command::archive_opml_links;
-use v5.18;
+use v5.36;
 use Diversion::App -command;
 use Diversion::FeedArchiver;
 

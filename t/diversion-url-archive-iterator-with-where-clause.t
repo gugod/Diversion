@@ -1,5 +1,5 @@
-use v5.18;
-use strict;
+use v5.36;
+
 use Diversion::UrlArchiveIterator;
 
 my $iter = Diversion::UrlArchiveIterator->new(

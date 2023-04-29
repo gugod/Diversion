@@ -1,6 +1,6 @@
 package Diversion::App::Command::buildmail;
 # ABSTRACT: build email containing recent entries
-use v5.18;
+use v5.36;
 use Moo;
 with 'Diversion::Service';
 use Diversion::App -command;

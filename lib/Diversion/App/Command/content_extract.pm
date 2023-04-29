@@ -1,6 +1,6 @@
 package Diversion::App::Command::content_extract;
 # ABSTRACT: Extract the content part of downloaded URLs.
-use v5.18;
+use v5.36;
 use Diversion::App -command;
 use Moo;
 with 'Diversion::Service';

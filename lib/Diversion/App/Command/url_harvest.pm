@@ -1,6 +1,6 @@
 package Diversion::App::Command::url_harvest;
 # ABSTRACT: Find more urls from the content of crawled urls.
-use v5.18;
+use v5.36;
 use Diversion::App -command;
 use Moo;
 with 'Diversion::Service';
